@@ -9,7 +9,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 ----------------------------------------------------------------------------------------------------------------------------------------------
 local Window = Fluent:CreateWindow({
     Title = "Grayx hub",
-    SubTitle = "Developer: Memories",
+    SubTitle = "Developer: Mkhoi",
     TabWidth = 160,
     Size = UDim2.fromOffset(530, 350),
     Acrylic = true,
@@ -22,7 +22,7 @@ local Tabs = {
     Stats = Window:AddTab({ Title = "Stats", Icon = "plus-circle" }),
     Player = Window:AddTab({ Title = "Player", Icon = "box" }),
     Teleport = Window:AddTab({ Title = "Island", Icon = "palmtree" }),
-    SeaETab = Window:AddTab({ Title = "Sea Event", Icon = "" }),
+    SeaETab = Window:AddTab({ Title = "Sea Event", Icon = "anchor" }),
     Fruit = Window:AddTab({ Title = "Fruit", Icon = "cherry" }),
     Raid = Window:AddTab({ Title = "Raid", Icon = "swords" }),
     Race = Window:AddTab({ Title = "Race V4", Icon = "chevrons-right" }),
@@ -3957,7 +3957,7 @@ end
 
 if Third_Sea then
 
-    local ToggleSailBoat = Tabs.SeaETab:AddToggle("ToggleSailBoat", {Title = "Auto Sail Boat To Zone 6",Description = "wait update", Default = false })
+    local ToggleSailBoat = Tabs.SeaETab:AddToggle("ToggleSailBoat", {Title = "Auto Sail Boat To Zone 6",Description = "go zone 6", Default = false })
     ToggleSailBoat:OnChanged(function(Value)
         _G.SailBoat = Value
     end)

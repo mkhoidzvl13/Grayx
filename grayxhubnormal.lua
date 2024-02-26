@@ -3357,7 +3357,7 @@ local Mastery = Tabs.Main:AddSection("Mastery Farm")
         KillPercent = Value
     end)
 
-    SliderHealt:SetValue(25)
+    SliderHealt:SetValue(30)
     
     
 spawn(function()

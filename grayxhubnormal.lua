@@ -4164,7 +4164,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
                             if v.Name == "Terrorshark" then
                                 if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
                                     repeat wait(_G.Fast_Delay)
-                                        AttackNoCoolDown()
+                                        AttackNoCoolDown(0.5)
                                         AutoHaki()
                                         EquipTool(SelectWeapon)
                                         v.HumanoidRootPart.CanCollide = false
@@ -4200,7 +4200,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
                             if v.Name == "Piranha" then
                                 if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
                                     repeat wait(_G.Fast_Delay)
-                                        AttackNoCoolDown()
+                                        AttackNoCoolDown(0.5)
                                         AutoHaki()
                                         EquipTool(SelectWeapon)
                                         v.HumanoidRootPart.CanCollide = false
@@ -4234,7 +4234,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
                             if v.Name == "Shark" then
                                 if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
                                     repeat wait(_G.Fast_Delay)
-                                        AttackNoCoolDown()
+                                        AttackNoCoolDown(0.5)
                                         AutoHaki()
                                         EquipTool(SelectWeapon)
                                         v.HumanoidRootPart.CanCollide = false
@@ -4266,7 +4266,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
                             if v.Name == "FishBoat" and v:FindFirstChild("VehicleSeat") then
                                 if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
                                     repeat task.wait(_G.Fast_Delay)
-                                        AttackNoCoolDown()
+                                        AttackNoCoolDown(0.5)
                                         AutoHaki()
                                         Tween(v.VehicleSeat.CFrame * CFrame.new(0,1,0))
                                         game.Players.LocalPlayer.Character.Humanoid.Sit = false

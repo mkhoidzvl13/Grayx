@@ -2837,7 +2837,7 @@ local listfastattack = {'Normal Attack','Fast Attack','Super Fast Attack'}
         Multi = false,
         Default = 1,
     })
-    DropdownDelayAttack:SetValue("Fast Attack")
+    DropdownDelayAttack:SetValue("Normal Attack")
     DropdownDelayAttack:OnChanged(function(Value)
     _G.FastAttackZedr_Mode = Value
 	if _G.FastAttackZedr_Mode == "Fast Attack" then

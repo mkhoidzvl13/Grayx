@@ -22,7 +22,7 @@ local Tabs = {
     Stats = Window:AddTab({ Title = "Stats", Icon = "plus-circle" }),
     Player = Window:AddTab({ Title = "Player", Icon = "box" }),
     Teleport = Window:AddTab({ Title = "Island", Icon = "palmtree" }),
-    SeaETab = Window:AddTab({ Title = "Sea Event", Icon = "anchor" }),
+    SeaETab = Window:AddTab({ Title = "cc", Icon = "anchor" }),
     Fruit = Window:AddTab({ Title = "Fruit", Icon = "cherry" }),
     Raid = Window:AddTab({ Title = "Raid", Icon = "swords" }),
     Race = Window:AddTab({ Title = "Race V4", Icon = "chevrons-right" }),

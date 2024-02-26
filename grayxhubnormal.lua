@@ -4001,17 +4001,18 @@ if Third_Sea then
     Options.ToggleRoughSea:SetValue(false)
     spawn(function()
         while task.wait() do
-        if _G.EscapeRoughsea and game.Workspace["_WorldOrigin"].Locations:FindFirstChild("Rough Sea") then
-            if game.Players.LocalPlayer.Character.Humanoid.Sit then
-                game.Players.LocalPlayer.Character.Humanoid.Sit = false
-            end
-            if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 50 then
-                if game.Players.LocalPlayer.Character:WaitForChild("Humanoid").Sit == false then
-                    TweenBoat(game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame)
+            if _G.EscapeRoughsea and game.Workspace["_WorldOrigin"].Locations:FindFirstChild("Rough Sea") then
+                if game.Players.LocalPlayer.Character.Humanoid.Sit then
+                    game.Players.LocalPlayer.Character.Humanoid.Sit = false
                 end
-            end
-            if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - Vector3.new(-28464.876953125, 45.90665817260742, 6896.8076171875)).Magnitude > 50 then
-                game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame = CFrame.new(-28464.876953125, 45.90665817260742, 6896.8076171875)
+                if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 50 then
+                    if game.Players.LocalPlayer.Character:WaitForChild("Humanoid").Sit == false then
+                        TweenBoat(game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame)
+                    end
+                end
+                if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - Vector3.new(-28464.876953125, 45.90665817260742, 6896.8076171875)).Magnitude > 50 then
+                    game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame = CFrame.new(-28464.876953125, 45.90665817260742, 6896.8076171875)
+                end
             end
         end
     end)

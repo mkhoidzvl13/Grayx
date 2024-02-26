@@ -7451,8 +7451,8 @@ InterfaceManager:SetFolder("ZedrScriptHub")
 SaveManager:SetFolder("ZedrScriptHub/specific-game")
 Window:SelectTab(1)
 Fluent:Notify({
-    Title = "developer moi bi ny ctay",
-    Content = "script được tạo bởi Nguyễn Minh Khôi.",
+    Title = "waiting loading script",
+    Content = "by: nguyen minh khoi.",
     Duration = 8
 })
 SaveManager:LoadAutoloadConfig()

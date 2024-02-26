@@ -4947,6 +4947,13 @@ ToggleF:OnChanged(function(Value)
 Options.ToggleF:SetValue(false)
 
 
+local ToggleF = Tabs.Setting:AddToggle("ToggleTap", {Title = "Tap",Description = "Tap", Default = false })
+ToggleF:OnChanged(function(Value)
+   SkillTap = Value
+    end)
+Options.ToggleTap:SetValue(false)
+
+
 local Pos = Tabs.Setting:AddSection("Distance Farm")
 
 local SliderPosX = Tabs.Setting:AddSlider("SliderPosX", {

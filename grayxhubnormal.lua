@@ -22,7 +22,7 @@ local Tabs = {
     Stats = Window:AddTab({ Title = "Stats", Icon = "plus-circle" }),
     Player = Window:AddTab({ Title = "Player", Icon = "box" }),
     Teleport = Window:AddTab({ Title = "Island", Icon = "palmtree" }),
-    SeaETab = Window:AddTab({ Title = "cc", Icon = "anchor" }),
+    SeaETab = Window:AddTab({ Title = "Sea Event", Icon = "anchor" }),
     Fruit = Window:AddTab({ Title = "Fruit", Icon = "cherry" }),
     Raid = Window:AddTab({ Title = "Raid", Icon = "swords" }),
     Race = Window:AddTab({ Title = "Race V4", Icon = "chevrons-right" }),
@@ -3961,7 +3961,7 @@ end
 
 if Third_Sea then
 
-    local ToggleSailBoat = Tabs.SeaETab:AddToggle("ToggleSailBoat", {Title = "Auto Sail Boat To Zone 6",Description = "wait update", Default = false })
+    local ToggleSailBoat = Tabs.SeaETab:AddToggle("ToggleSailBoat", {Title = "Auto Sail Boat To Zone 6",Description = "auto zone 6", Default = false })
     ToggleSailBoat:OnChanged(function(Value)
         _G.SailBoat = Value
     end)
@@ -3997,7 +3997,7 @@ if Third_Sea then
             end)
         end
     end)
-    local ToggleRoughSea = Tabs.SeaETab:AddToggle("ToggleRoughSea", {Title = "Auto Escape Rough Sea",Description = "", Default = false })
+    local ToggleRoughSea = Tabs.SeaETab:AddToggle("ToggleRoughSea", {Title = "Auto Escape Rough Sea",Description = "thoát ra rough sea", Default = false })
 
     ToggleRoughSea:OnChanged(function(Value)
         _G.EscapeRoughsea = Value
@@ -4032,7 +4032,7 @@ if Third_Sea then
 		end)
 	end)
 	
-    local ToggleSeaBeAst = Tabs.SeaETab:AddToggle("ToggleSeaBeAst", {Title = "Auto Kill Sea Beast + Ghost Ship",Description = "", Default = false })
+    local ToggleSeaBeAst = Tabs.SeaETab:AddToggle("ToggleSeaBeAst", {Title = "Auto Kill Sea Beast + Ghost Ship",Description = "kill quái vật biển & thuyền ma", Default = false })
 
 ToggleSeaBeAst:OnChanged(function(Value)
     _G.AutoSeaBeast = Value
@@ -4149,7 +4149,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
         end
     end)
 
-    local ToggleTerrorshark = Tabs.SeaETab:AddToggle("ToggleTerrorshark", {Title = "Auto Terrorshark",Description = "", Default = false })
+    local ToggleTerrorshark = Tabs.SeaETab:AddToggle("ToggleTerrorshark", {Title = "Auto Terrorshark",Description = "kill boss cá mập", Default = false })
 
     ToggleTerrorshark:OnChanged(function(Value)
         _G.AutoTerrorshark = Value
@@ -4184,7 +4184,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
 
 
 
-     local TogglePiranha = Tabs.SeaETab:AddToggle("TogglePiranha", {Title = "Auto Piranha",Description = "", Default = false })
+     local TogglePiranha = Tabs.SeaETab:AddToggle("TogglePiranha", {Title = "Auto Piranha",Description = "kill cá", Default = false })
 
      TogglePiranha:OnChanged(function(Value)
         _G.farmpiranya = Value
@@ -4220,7 +4220,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
 
 
 
-     local ToggleShark = Tabs.SeaETab:AddToggle("ToggleShark", {Title = "Auto Shark",Description = "", Default = false })
+     local ToggleShark = Tabs.SeaETab:AddToggle("ToggleShark", {Title = "Auto Shark",Description = "kill cá mập", Default = false })
      ToggleShark:OnChanged(function(Value)
         _G.AutoShark = Value
      end)
@@ -4251,7 +4251,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
             end
         end
     end)
-    local ToggleFishCrew = Tabs.SeaETab:AddToggle("ToggleFishCrew", {Title = "Auto Fish Ship + Crew Warrior",Description = "", Default = false })
+    local ToggleFishCrew = Tabs.SeaETab:AddToggle("ToggleFishCrew", {Title = "Auto Fish Ship + Crew Warrior",Description = "kill thuyền", Default = false })
     ToggleFishCrew:OnChanged(function(Value)
        _G.AutoFishCrew = Value
     end)

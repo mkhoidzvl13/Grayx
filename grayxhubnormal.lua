@@ -1343,7 +1343,7 @@ function checkboat()
     return false
 end
 function CheckPirateBoat()
-    local boat = {"PirateBrigade", "PirateGrandBrigade"}
+    local boat = {"BeastHunter", "BeastHunter"}
     for i, v in pairs(game.Workspace.Enemies:GetChildren()) do
         if table.find(boat, v.Name) then
             return v
@@ -3970,26 +3970,26 @@ if Third_Sea then
         while task.wait() do
             pcall(function()
                 if _G.SailBoat then
-                    if not game.Workspace.SeaBeasts:FindFirstChild("SeaBeast1") or (not game.Workspace.Enemies:FindFirstChild("PirateBrigade") and not game.Workspace.Enemies:FindFirstChild("PirateGrandBrigade")) or not game:GetService("Workspace").Enemies:FindFirstChild("Shark") or not game:GetService("Workspace").Enemies:FindFirstChild("Terrorshark") or not game:GetService("Workspace").Enemies:FindFirstChild("Piranha") or not game:GetService("Workspace").Enemies:FindFirstChild("Fish Crew Member") or not game.Workspace["_WorldOrigin"].Locations:FindFirstChild("Rough Sea") then
-                        if not game:GetService("Workspace").Boats:FindFirstChild("PirateGrandBrigade") then
+                    if not game.Workspace.SeaBeasts:FindFirstChild("SeaBeast1") or (not game.Workspace.Enemies:FindFirstChild("BeastHunter") and not game.Workspace.Enemies:FindFirstChild("BeastHunter")) or not game:GetService("Workspace").Enemies:FindFirstChild("Shark") or not game:GetService("Workspace").Enemies:FindFirstChild("Terrorshark") or not game:GetService("Workspace").Enemies:FindFirstChild("Piranha") or not game:GetService("Workspace").Enemies:FindFirstChild("Fish Crew Member") or not game.Workspace["_WorldOrigin"].Locations:FindFirstChild("Rough Sea") then
+                        if not game:GetService("Workspace").Boats:FindFirstChild("BeastHunter") then
                             buyb = TweenBoat(CFrame.new(-16927.451171875, 9.0863618850708, 433.8642883300781))
                             if (CFrame.new(-16927.451171875, 9.0863618850708, 433.8642883300781).Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).magnitude <= 10 then
                                 if buyb then buyb:Stop() end
                                 local args = {
                                     [1] = "BuyBoat",
-                                    [2] = "PirateGrandBrigade"
+                                    [2] = "BeastHunter"
                                 }
     
                                 game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
                             end
-                        elseif game:GetService("Workspace").Boats:FindFirstChild("PirateGrandBrigade") then
-                            if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 50 then
+                        elseif game:GetService("Workspace").Boats:FindFirstChild("BeastHunter") then
+                            if (game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 50 then
                                 if game.Players.LocalPlayer.Character:WaitForChild("Humanoid").Sit == false then
-                                    TweenBoat(game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame)
+                                    TweenBoat(game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.CFrame)
                                 end
                             end
-                            if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - Vector3.new(-32704.103515625, 45.90665817260742, 24089.923828125)).Magnitude > 50 then
-                                game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame = CFrame.new(-32704.103515625, 45.90665817260742, 24089.923828125)
+                            if (game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.Position - Vector3.new(-32704.103515625, 45.90665817260742, 24089.923828125)).Magnitude > 50 then
+                                game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.CFrame = CFrame.new(-32704.103515625, 45.90665817260742, 24089.923828125)
                             end
                         end
                     end
@@ -4009,13 +4009,13 @@ if Third_Sea then
                 if game.Players.LocalPlayer.Character.Humanoid.Sit then
                     game.Players.LocalPlayer.Character.Humanoid.Sit = false
                 end
-                if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 50 then
+                if (game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.Position - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude > 50 then
                     if game.Players.LocalPlayer.Character:WaitForChild("Humanoid").Sit == false then
-                        TweenBoat(game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame)
+                        TweenBoat(game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.CFrame)
                     end
                 end
-                if (game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.Position - Vector3.new(-28464.876953125, 45.90665817260742, 6896.8076171875)).Magnitude > 50 then
-                    game:GetService("Workspace").Boats.PirateGrandBrigade.VehicleSeat.CFrame = CFrame.new(-28464.876953125, 45.90665817260742, 6896.8076171875)
+                if (game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.Position - Vector3.new(-28464.876953125, 45.90665817260742, 6896.8076171875)).Magnitude > 50 then
+                    game:GetService("Workspace").Boats.BeastHunter.VehicleSeat.CFrame = CFrame.new(-28464.876953125, 45.90665817260742, 6896.8076171875)
                 end
             end
         end
@@ -4112,7 +4112,7 @@ ToggleSeaBeAst:OnChanged(function(Value)
         while wait() do
             pcall(function()
                 if _G.AutoSeaBeast then
-                    local NameEnemiesBoat = {"PirateBrigade", "PirateGrandBrigade"}
+                    local NameEnemiesBoat = {"PirateBrigade", "BeastHunter"}
                     for i,v in pairs(game.Workspace.Enemies:GetChildren()) do
                         if table.find(NameEnemiesBoat, v.Name) then
                             repeat task.wait()

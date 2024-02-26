@@ -4947,11 +4947,11 @@ ToggleF:OnChanged(function(Value)
 Options.ToggleF:SetValue(false)
 
 
-local ToggleF = Tabs.Setting:AddToggle("ToggleTap", {Title = "Tap",Description = "Tap", Default = false })
+local ToggleF = Tabs.Setting:AddToggle("ToggleClick", {Title = "Click",Description = "tao dz", Default = false })
 ToggleF:OnChanged(function(Value)
-   SkillTap = Value
+   SkillClick = Value
     end)
-Options.ToggleTap:SetValue(false)
+Options.ToggleClick:SetValue(false)
 
 
 local Pos = Tabs.Setting:AddSection("Distance Farm")

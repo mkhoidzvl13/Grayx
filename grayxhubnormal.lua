@@ -1,4 +1,4 @@
-local GrayxLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local GrayxLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/mkhoidzvl13/Grayx/main/sword.lua')))()
 
 local Window = GrayxLib:MakeWindow({Name = "Grayx hub", HidePremium = false, SaveConfig = true, ConfigFolder = "Swordburst3", ShowIcon = true})
 

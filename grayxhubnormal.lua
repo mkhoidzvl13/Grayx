@@ -1,6 +1,6 @@
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local GrayxLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 
-local Window = OrionLib:MakeWindow({Name = "Grayx hub", HidePremium = false, SaveConfig = true, ConfigFolder = "Swordburst3", ShowIcon = true})
+local Window = GrayxLib:MakeWindow({Name = "Grayx hub", HidePremium = false, SaveConfig = true, ConfigFolder = "Swordburst3", ShowIcon = true})
 
 local mainTab = Window:MakeTab({
 	Name = "Main",
@@ -351,7 +351,7 @@ creditTab:AddButton({
 settingsTab:AddButton({
 	Name = "Destroy Gui",
 	Callback = function()
-        OrionLib:Destroy()
+        GrayxLib:Destroy()
   	end    
 })
 
@@ -549,4 +549,4 @@ task.spawn(function()
     end
 end)
 
-OrionLib:Init()
+GrayxLib:Init()

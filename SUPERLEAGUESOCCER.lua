@@ -47,7 +47,7 @@ local function GetIcon(IconName)
 end   
 
 local Grayx = Instance.new("ScreenGui")
-Grayx.Name = "Grayx"
+Grayx.Name = "Grayx hub"
 if syn then
 	syn.protect_gui(Grayx)
 	Grayx.Parent = game.CoreGui
@@ -481,7 +481,7 @@ function GrayxLib:MakeWindow(WindowConfig)
 	WindowConfig.IntroText = WindowConfig.IntroText or "Grayx Library"
 	WindowConfig.CloseCallback = WindowConfig.CloseCallback or function() end
 	WindowConfig.ShowIcon = WindowConfig.ShowIcon or false
-	WindowConfig.Icon = WindowConfig.Icon or "rbxassetid://16364791027"
+	WindowConfig.Icon = WindowConfig.Icon or "16364791027"
 	WindowConfig.IntroIcon = WindowConfig.IntroIcon or "rbxassetid://16364791027"
 	GrayxLib.Folder = WindowConfig.ConfigFolder
 	GrayxLib.SaveCfg = WindowConfig.SaveConfig

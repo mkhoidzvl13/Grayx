@@ -2,8 +2,8 @@ repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
 _G.Primary = Color3.fromRGB(0, 45, 255)
 _G.Dark = Color3.fromRGB(46, 56, 56)
 ----------------------------------------------------------------------------------------------------------------------------------------
-_G.TieuDe = " Hub"
-_G.ThongBao = "Tên Hub"
+_G.TieuDe = " Aqua"
+_G.ThongBao = "Aqua Hub"
 _G.ThongBaoChoose = "Cracj Blox Fruits Script"
 
 _G.Discord = "https://discord.gg/alchemyhub"
@@ -289,7 +289,7 @@ ttittles.BackgroundTransparency = 1
 ttittles.Position = UDim2.new(0,30,0.05,0)
 ttittles.Size = UDim2.new(0, 255, 0.05, 25)
 ttittles.Font = Enum.Font.SourceSansBold
-ttittles.Text = "dit me apple Hub tao la grayx-mkhoi"
+ttittles.Text = "Aqua hub"
 ttittles.TextSize = 15.000
 ttittles.TextColor3 = Color3.fromRGB(255,255,255)
 ttittles.TextXAlignment = Enum.TextXAlignment.Left
@@ -4458,12 +4458,12 @@ local Misc = Library:AddTab("Miscellaneous","rbxassetid://10709782582")
 --------------------------------------------------------------------------------------------------------
 TienTiny:AddSeperator("x2N HUB")
 TienTiny:UserMinhTien()
-local Creator = TienTiny:AddLabel('Hii '..game.Players.LocalPlayer.Name.." To x2N HUB !! Thanks Using.")
+local Creator = TienTiny:AddLabel('Hii '..game.Players.LocalPlayer.Name.." To Aqua HUB !! Thanks Using.")
 
 spawn(function()
     while wait() do
         pcall(function()
-            if game.Players.LocalPlayer.Name == "NguyenMinhTienTiny" then
+            if game.Players.LocalPlayer.Name == "Aqua" then
             Creator:Set("Hii Developer Welcome Back!")
             end
         end)
@@ -4471,7 +4471,7 @@ spawn(function()
 end)
 
 TienTiny:AddSeperator("🧑‍💻 Developer 🧑‍💻")
-TienTiny:AddLabel("Owner: Nguyen Minh Tien (Tien Tiny)")
+TienTiny:AddLabel("Owner: Aqua dep trai")
 TienTiny:AddSeperator("Social Network")
 TienTiny:AddButton('Discord Sever', function()
 setclipboard(_G.Discord)
@@ -17383,7 +17383,7 @@ UIStroke.Color = Color3.fromRGB(252, 3, 161)
 UIStroke.Thickness = 1.5
 UIStroke.Parent = ImageButton1
 ----------------------------------------------------------------------------------------------------------------------------------------
-Notification.Notify("Notification", "Thank You for Using x2N HUB.", "rbxassetid://10709761889", {
+Notification.Notify("Notification", "Thank You for Using Aqua HUB.", "rbxassetid://10709761889", {
     Duration = 5,       
     Main = {
         Rounding = true,

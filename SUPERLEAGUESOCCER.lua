@@ -2,7 +2,7 @@ repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
 _G.Primary = Color3.fromRGB(0, 45, 255)
 _G.Dark = Color3.fromRGB(46, 56, 56)
 ----------------------------------------------------------------------------------------------------------------------------------------
-_G.TieuDe = "Tên Hub"
+_G.TieuDe = " Hub"
 _G.ThongBao = "Tên Hub"
 _G.ThongBaoChoose = "Cracj Blox Fruits Script"
 
@@ -289,7 +289,7 @@ ttittles.BackgroundTransparency = 1
 ttittles.Position = UDim2.new(0,30,0.05,0)
 ttittles.Size = UDim2.new(0, 255, 0.05, 25)
 ttittles.Font = Enum.Font.SourceSansBold
-ttittles.Text = "Tên Hub"
+ttittles.Text = "dit me apple Hub tao la grayx-mkhoi"
 ttittles.TextSize = 15.000
 ttittles.TextColor3 = Color3.fromRGB(255,255,255)
 ttittles.TextXAlignment = Enum.TextXAlignment.Left

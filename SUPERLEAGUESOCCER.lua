@@ -1,1760 +1,3781 @@
-
-
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local LocalPlayer = game:GetService("Players").LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
-local HttpService = game:GetService("HttpService")
-
-local GrayxLib = {
-	Elements = {},
-	ThemeObjects = {},
-	Connections = {},
-	Flags = {},
-	Themes = {
-		Default = {
-			Main = Color3.fromRGB(25, 25, 25),
-			Second = Color3.fromRGB(32, 32, 32),
-			Stroke = Color3.fromRGB(60, 60, 60),
-			Divider = Color3.fromRGB(60, 60, 60),
-			Text = Color3.fromRGB(240, 240, 240),
-			TextDark = Color3.fromRGB(150, 150, 150)
-		}
-	},
-	SelectedTheme = "Default",
-	Folder = nil,
-	SaveCfg = false
-}
-
---Feather Icons https://github.com/evoincorp/lucideblox/tree/master/src/modules/util - Created by 7kayoh
-local Icons = {}
-
-local Success, Response = pcall(function()
-	Icons = HttpService:JSONDecode(game:HttpGetAsync("https://raw.githubusercontent.com/evoincorp/lucideblox/master/src/modules/util/icons.json")).icons
-end)
-
-if not Success then
-	warn("\Grayx Library - Failed to load Feather Icons. Error code: " .. Response .. "\n")
-end	
-
-local function GetIcon(IconName)
-	if Icons[IconName] ~= nil then
-		return Icons[IconName]
-	else
-		return nil
-	end
-end   
-
-local Grayx = Instance.new("ScreenGui")
-Grayx.Name = "Grayx hub"
-if syn then
-	syn.protect_gui(Grayx)
-	Grayx.Parent = game.CoreGui
-else
-	Grayx.Parent = gethui() or game.CoreGui
-end
-
-if gethui then
-	for _, Interface in ipairs(gethui():GetChildren()) do
-		if Interface.Name == Grayx.Name and Interface ~= Grayx then
-			Interface:Destroy()
-		end
-	end
-else
-	for _, Interface in ipairs(game.CoreGui:GetChildren()) do
-		if Interface.Name == Grayx.Name and Interface ~= Grayx then
-			Interface:Destroy()
-		end
-	end
-end
-
-function GrayxLib:IsRunning()
-	if gethui then
-		return Grayx.Parent == gethui()
-	else
-		return Grayx.Parent == game:GetService("CoreGui")
-	end
-
-end
-
-local function AddConnection(Signal, Function)
-	if (not GrayxLib:IsRunning()) then
-		return
-	end
-	local SignalConnect = Signal:Connect(Function)
-	table.insert(GrayxLib.Connections, SignalConnect)
-	return SignalConnect
-end
-
-task.spawn(function()
-	while (GrayxLib:IsRunning()) do
-		wait()
-	end
-
-	for _, Connection in next, GrayxLib.Connections do
-		Connection:Disconnect()
-	end
-end)
-
-local function MakeDraggable(DragPoint, Main)
-	pcall(function()
-		local Dragging, DragInput, MousePos, FramePos = false
-		AddConnection(DragPoint.InputBegan, function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-				Dragging = true
-				MousePos = Input.Position
-				FramePos = Main.Position
-
-				Input.Changed:Connect(function()
-					if Input.UserInputState == Enum.UserInputState.End then
-						Dragging = false
-					end
-				end)
-			end
-		end)
-		AddConnection(DragPoint.InputChanged, function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseMovement then
-				DragInput = Input
-			end
-		end)
-		AddConnection(UserInputService.InputChanged, function(Input)
-			if Input == DragInput and Dragging then
-				local Delta = Input.Position - MousePos
-				--TweenService:Create(Main, TweenInfo.new(0.05, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position  = UDim2.new(FramePos.X.Scale,FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)}):Play()
-				Main.Position  = UDim2.new(FramePos.X.Scale,FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)
-			end
-		end)
-	end)
-end    
-
-local function Create(Name, Properties, Children)
-	local Object = Instance.new(Name)
-	for i, v in next, Properties or {} do
-		Object[i] = v
-	end
-	for i, v in next, Children or {} do
-		v.Parent = Object
-	end
-	return Object
-end
-
-local function CreateElement(ElementName, ElementFunction)
-	GrayxLib.Elements[ElementName] = function(...)
-		return ElementFunction(...)
-	end
-end
-
-local function MakeElement(ElementName, ...)
-	local NewElement = GrayxLib.Elements[ElementName](...)
-	return NewElement
-end
-
-local function SetProps(Element, Props)
-	table.foreach(Props, function(Property, Value)
-		Element[Property] = Value
-	end)
-	return Element
-end
-
-local function SetChildren(Element, Children)
-	table.foreach(Children, function(_, Child)
-		Child.Parent = Element
-	end)
-	return Element
-end
-
-local function Round(Number, Factor)
-	local Result = math.floor(Number/Factor + (math.sign(Number) * 0.5)) * Factor
-	if Result < 0 then Result = Result + Factor end
-	return Result
-end
-
-local function ReturnProperty(Object)
-	if Object:IsA("Frame") or Object:IsA("TextButton") then
-		return "BackgroundColor3"
-	end 
-	if Object:IsA("ScrollingFrame") then
-		return "ScrollBarImageColor3"
-	end 
-	if Object:IsA("UIStroke") then
-		return "Color"
-	end 
-	if Object:IsA("TextLabel") or Object:IsA("TextBox") then
-		return "TextColor3"
-	end   
-	if Object:IsA("ImageLabel") or Object:IsA("ImageButton") then
-		return "ImageColor3"
-	end   
-end
-
-local function AddThemeObject(Object, Type)
-	if not GrayxLib.ThemeObjects[Type] then
-		GrayxLib.ThemeObjects[Type] = {}
-	end    
-	table.insert(GrayxLib.ThemeObjects[Type], Object)
-	Object[ReturnProperty(Object)] = GrayxLib.Themes[GrayxLib.SelectedTheme][Type]
-	return Object
-end    
-
-local function SetTheme()
-	for Name, Type in pairs(GrayxLib.ThemeObjects) do
-		for _, Object in pairs(Type) do
-			Object[ReturnProperty(Object)] = GrayxLib.Themes[GrayxLib.SelectedTheme][Name]
-		end    
-	end    
-end
-
-local function PackColor(Color)
-	return {R = Color.R * 255, G = Color.G * 255, B = Color.B * 255}
-end    
-
-local function UnpackColor(Color)
-	return Color3.fromRGB(Color.R, Color.G, Color.B)
-end
-
-local function LoadCfg(Config)
-	local Data = HttpService:JSONDecode(Config)
-	table.foreach(Data, function(a,b)
-		if GrayxLib.Flags[a] then
-			spawn(function() 
-				if GrayxLib.Flags[a].Type == "Colorpicker" then
-					GrayxLib.Flags[a]:Set(UnpackColor(b))
-				else
-					GrayxLib.Flags[a]:Set(b)
-				end    
-			end)
-		else
-			warn("Grayx Library Config Loader - Could not find ", a ,b)
-		end
-	end)
-end
-
-local function SaveCfg(Name)
-	local Data = {}
-	for i,v in pairs(GrayxLib.Flags) do
-		if v.Save then
-			if v.Type == "Colorpicker" then
-				Data[i] = PackColor(v.Value)
-			else
-				Data[i] = v.Value
-			end
-		end	
-	end
-	writefile(GrayxLib.Folder .. "/" .. Name .. ".txt", tostring(HttpService:JSONEncode(Data)))
-end
-
-local WhitelistedMouse = {Enum.UserInputType.MouseButton1, Enum.UserInputType.MouseButton2,Enum.UserInputType.MouseButton3}
-		end
-	end
-end
-
-CreateElement("Corner", function(Scale, Offset)
-	local Corner = Create("UICorner", {
-		CornerRadius = UDim.new(Scale or 0, Offset or 10)
-	})
-	return Corner
-end)
-
-CreateElement("Stroke", function(Color, Thickness)
-	local Stroke = Create("UIStroke", {
-		Color = Color or Color3.fromRGB(255, 255, 255),
-		Thickness = Thickness or 1
-	})
-	return Stroke
-end)
-
-CreateElement("List", function(Scale, Offset)
-	local List = Create("UIListLayout", {
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		Padding = UDim.new(Scale or 0, Offset or 0)
-	})
-	return List
-end)
-
-CreateElement("Padding", function(Bottom, Left, Right, Top)
-	local Padding = Create("UIPadding", {
-		PaddingBottom = UDim.new(0, Bottom or 4),
-		PaddingLeft = UDim.new(0, Left or 4),
-		PaddingRight = UDim.new(0, Right or 4),
-		PaddingTop = UDim.new(0, Top or 4)
-	})
-	return Padding
-end)
-
-CreateElement("TFrame", function()
-	local TFrame = Create("Frame", {
-		BackgroundTransparency = 1
-	})
-	return TFrame
-end)
-
-CreateElement("Frame", function(Color)
-	local Frame = Create("Frame", {
-		BackgroundColor3 = Color or Color3.fromRGB(255, 255, 255),
-		BorderSizePixel = 0
-	})
-	return Frame
-end)
-
-CreateElement("RoundFrame", function(Color, Scale, Offset)
-	local Frame = Create("Frame", {
-		BackgroundColor3 = Color or Color3.fromRGB(255, 255, 255),
-		BorderSizePixel = 0
-	}, {
-		Create("UICorner", {
-			CornerRadius = UDim.new(Scale, Offset)
-		})
-	})
-	return Frame
-end)
-
-CreateElement("Button", function()
-	local Button = Create("TextButton", {
-		Text = "",
-		AutoButtonColor = false,
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0
-	})
-	return Button
-end)
-
-CreateElement("ScrollFrame", function(Color, Width)
-	local ScrollFrame = Create("ScrollingFrame", {
-		BackgroundTransparency = 1,
-		MidImage = "rbxassetid://7445543667",
-		BottomImage = "rbxassetid://7445543667",
-		TopImage = "rbxassetid://7445543667",
-		ScrollBarImageColor3 = Color,
-		BorderSizePixel = 0,
-		ScrollBarThickness = Width,
-		CanvasSize = UDim2.new(0, 0, 0, 0)
-	})
-	return ScrollFrame
-end)
-
-CreateElement("Image", function(ImageID)
-	local ImageNew = Create("ImageLabel", {
-		Image = ImageID,
-		BackgroundTransparency = 1
-	})
-
-	if GetIcon(ImageID) ~= nil then
-		ImageNew.Image = GetIcon(ImageID)
-	end	
-
-	return ImageNew
-end)
-
-CreateElement("ImageButton", function(ImageID)
-	local Image = Create("ImageButton", {
-		Image = ImageID,
-		BackgroundTransparency = 1
-	})
-	return Image
-end)
-
-CreateElement("Label", function(Text, TextSize, Transparency)
-	local Label = Create("TextLabel", {
-		Text = Text or "",
-		TextColor3 = Color3.fromRGB(240, 240, 240),
-		TextTransparency = Transparency or 0,
-		TextSize = TextSize or 15,
-		Font = Enum.Font.Gotham,
-		RichText = true,
-		BackgroundTransparency = 1,
-		TextXAlignment = Enum.TextXAlignment.Left
-	})
-	return Label
-end)
-
-local NotificationHolder = SetProps(SetChildren(MakeElement("TFrame"), {
-	SetProps(MakeElement("List"), {
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		VerticalAlignment = Enum.VerticalAlignment.Bottom,
-		Padding = UDim.new(0, 5)
-	})
-}), {
-	Position = UDim2.new(1, -25, 1, -25),
-	Size = UDim2.new(0, 300, 1, -25),
-	AnchorPoint = Vector2.new(1, 1),
-	Parent = Grayx
+repeat wait()
+until getgenv().LoadUi and getgenv().IslandCaller and getgenv().SettingManager 
+local Title = "W-azure" .. (getgenv().Premium and " [Premium]" or "")
+local SubTitle = "True V2 discord.gg/w-azure"
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/vinhuchi/rblx/main/FixedFluent.lua"))()
+local UiSetting = Fluent.Options
+local IslandCaller = IslandCaller or getgenv().IslandCaller
+local SettingManager = getgenv().SettingManager 
+local Window = getgenv().Window or Fluent:CreateWindow({
+    Title = Title,
+    SubTitle = SubTitle,
+    TabWidth = 160,
+    Size = UDim2.fromOffset(480, 360),
+    Acrylic = false, -- The blur may be detectable, setting this to false disables blur entirely
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl -- Used when theres no MinimizeKeybind
 })
-
-function GrayxLib:MakeNotification(NotificationConfig)
-	spawn(function()
-		NotificationConfig.Name = NotificationConfig.Name or "Notification"
-		NotificationConfig.Content = NotificationConfig.Content or "Test"
-		NotificationConfig.Image = NotificationConfig.Image or "rbxassetid://4384403532"
-		NotificationConfig.Time = NotificationConfig.Time or 15
-
-		local NotificationParent = SetProps(MakeElement("TFrame"), {
-			Size = UDim2.new(1, 0, 0, 0),
-			AutomaticSize = Enum.AutomaticSize.Y,
-			Parent = NotificationHolder
-		})
-
-		local NotificationFrame = SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(25, 25, 25), 0, 10), {
-			Parent = NotificationParent, 
-			Size = UDim2.new(1, 0, 0, 0),
-			Position = UDim2.new(1, -55, 0, 0),
-			BackgroundTransparency = 0,
-			AutomaticSize = Enum.AutomaticSize.Y
-		}), {
-			MakeElement("Stroke", Color3.fromRGB(93, 93, 93), 1.2),
-			MakeElement("Padding", 12, 12, 12, 12),
-			SetProps(MakeElement("Image", NotificationConfig.Image), {
-				Size = UDim2.new(0, 20, 0, 20),
-				ImageColor3 = Color3.fromRGB(240, 240, 240),
-				Name = "Icon"
-			}),
-			SetProps(MakeElement("Label", NotificationConfig.Name, 15), {
-				Size = UDim2.new(1, -30, 0, 20),
-				Position = UDim2.new(0, 30, 0, 0),
-				Font = Enum.Font.GothamBold,
-				Name = "Title"
-			}),
-			SetProps(MakeElement("Label", NotificationConfig.Content, 14), {
-				Size = UDim2.new(1, 0, 0, 0),
-				Position = UDim2.new(0, 0, 0, 25),
-				Font = Enum.Font.GothamSemibold,
-				Name = "Content",
-				AutomaticSize = Enum.AutomaticSize.Y,
-				TextColor3 = Color3.fromRGB(200, 200, 200),
-				TextWrapped = true
-			})
-		})
-
-		TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(0, 0, 0, 0)}):Play()
-
-		wait(NotificationConfig.Time - 0.88)
-		TweenService:Create(NotificationFrame.Icon, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
-		TweenService:Create(NotificationFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quint), {BackgroundTransparency = 0.6}):Play()
-		wait(0.3)
-		TweenService:Create(NotificationFrame.UIStroke, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {Transparency = 0.9}):Play()
-		TweenService:Create(NotificationFrame.Title, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
-		TweenService:Create(NotificationFrame.Content, TweenInfo.new(0.6, Enum.EasingStyle.Quint), {TextTransparency = 0.5}):Play()
-		wait(0.05)
-
-		NotificationFrame:TweenPosition(UDim2.new(1, 20, 0, 0),'In','Quint',0.8,true)
-		wait(1.35)
-		NotificationFrame:Destroy()
-	end)
-end    
-
-function GrayxLib:Init()
-	if GrayxLib.SaveCfg then	
-		pcall(function()
-			if isfile(GrayxLib.Folder .. "/" .. game.GameId .. ".txt") then
-				LoadCfg(readfile(GrayxLib.Folder .. "/" .. game.GameId .. ".txt"))
-				GrayxLib:MakeNotification({
-					Name = "Configuration",
-					Content = "Auto-loaded configuration for the game " .. game.GameId .. ".",
-					Time = 5
-				})
-			end
-		end)		
-	end	
-end	
-
-function GrayxLib:MakeWindow(WindowConfig)
-	local FirstTab = true
-	local Minimized = false
-	local Loaded = false
-	local UIHidden = false
-
-	WindowConfig = WindowConfig or {}
-	WindowConfig.Name = WindowConfig.Name or "Grayx Library"
-	WindowConfig.ConfigFolder = WindowConfig.ConfigFolder or WindowConfig.Name
-	WindowConfig.SaveConfig = WindowConfig.SaveConfig or false
-	WindowConfig.HidePremium = WindowConfig.HidePremium or false
-	if WindowConfig.IntroEnabled == nil then
-		WindowConfig.IntroEnabled = true
-	end
-	WindowConfig.IntroText = WindowConfig.IntroText or "Grayx Library"
-	WindowConfig.CloseCallback = WindowConfig.CloseCallback or function() end
-	WindowConfig.ShowIcon = WindowConfig.ShowIcon or false
-	WindowConfig.Icon = WindowConfig.Icon or "16364791027"
-	WindowConfig.IntroIcon = WindowConfig.IntroIcon or "rbxassetid://16364791027"
-	GrayxLib.Folder = WindowConfig.ConfigFolder
-	GrayxLib.SaveCfg = WindowConfig.SaveConfig
-
-	if WindowConfig.SaveConfig then
-		if not isfolder(WindowConfig.ConfigFolder) then
-			makefolder(WindowConfig.ConfigFolder)
-		end	
-	end
-
-	local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
-		Size = UDim2.new(1, 0, 1, -50)
-	}), {
-		MakeElement("List"),
-		MakeElement("Padding", 8, 0, 0, 8)
-	}), "Divider")
-
-	AddConnection(TabHolder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-		TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabHolder.UIListLayout.AbsoluteContentSize.Y + 16)
-	end)
-
-	local CloseBtn = SetChildren(SetProps(MakeElement("Button"), {
-		Size = UDim2.new(0.5, 0, 1, 0),
-		Position = UDim2.new(0.5, 0, 0, 0),
-		BackgroundTransparency = 1
-	}), {
-		AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072725342"), {
-			Position = UDim2.new(0, 9, 0, 6),
-			Size = UDim2.new(0, 18, 0, 18)
-		}), "Text")
-	})
-
-	local MinimizeBtn = SetChildren(SetProps(MakeElement("Button"), {
-		Size = UDim2.new(0.5, 0, 1, 0),
-		BackgroundTransparency = 1
-	}), {
-		AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072719338"), {
-			Position = UDim2.new(0, 9, 0, 6),
-			Size = UDim2.new(0, 18, 0, 18),
-			Name = "Ico"
-		}), "Text")
-	})
-
-	local DragPoint = SetProps(MakeElement("TFrame"), {
-		Size = UDim2.new(1, 0, 0, 50)
-	})
-
-	local WindowStuff = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
-		Size = UDim2.new(0, 150, 1, -50),
-		Position = UDim2.new(0, 0, 0, 50)
-	}), {
-		AddThemeObject(SetProps(MakeElement("Frame"), {
-			Size = UDim2.new(1, 0, 0, 10),
-			Position = UDim2.new(0, 0, 0, 0)
-		}), "Second"), 
-		AddThemeObject(SetProps(MakeElement("Frame"), {
-			Size = UDim2.new(0, 10, 1, 0),
-			Position = UDim2.new(1, -10, 0, 0)
-		}), "Second"), 
-		AddThemeObject(SetProps(MakeElement("Frame"), {
-			Size = UDim2.new(0, 1, 1, 0),
-			Position = UDim2.new(1, -1, 0, 0)
-		}), "Stroke"), 
-		TabHolder,
-		SetChildren(SetProps(MakeElement("TFrame"), {
-			Size = UDim2.new(1, 0, 0, 50),
-			Position = UDim2.new(0, 0, 1, -50)
-		}), {
-			AddThemeObject(SetProps(MakeElement("Frame"), {
-				Size = UDim2.new(1, 0, 0, 1)
-			}), "Stroke"), 
-			AddThemeObject(SetChildren(SetProps(MakeElement("Frame"), {
-				AnchorPoint = Vector2.new(0, 0.5),
-				Size = UDim2.new(0, 32, 0, 32),
-				Position = UDim2.new(0, 10, 0.5, 0)
-			}), {
-				SetProps(MakeElement("Image", "https://www.roblox.com/headshot-thumbnail/image?userId=".. LocalPlayer.UserId .."&width=420&height=420&format=png"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				}),
-				AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://4031889928"), {
-					Size = UDim2.new(1, 0, 1, 0),
-				}), "Second"),
-				MakeElement("Corner", 1)
-			}), "Divider"),
-			SetChildren(SetProps(MakeElement("TFrame"), {
-				AnchorPoint = Vector2.new(0, 0.5),
-				Size = UDim2.new(0, 32, 0, 32),
-				Position = UDim2.new(0, 10, 0.5, 0)
-			}), {
-				AddThemeObject(MakeElement("Stroke"), "Stroke"),
-				MakeElement("Corner", 1)
-			}),
-			AddThemeObject(SetProps(MakeElement("Label", LocalPlayer.DisplayName, WindowConfig.HidePremium and 14 or 13), {
-				Size = UDim2.new(1, -60, 0, 13),
-				Position = WindowConfig.HidePremium and UDim2.new(0, 50, 0, 19) or UDim2.new(0, 50, 0, 12),
-				Font = Enum.Font.GothamBold,
-				ClipsDescendants = true
-			}), "Text"),
-			AddThemeObject(SetProps(MakeElement("Label", "", 12), {
-				Size = UDim2.new(1, -60, 0, 12),
-				Position = UDim2.new(0, 50, 1, -25),
-				Visible = not WindowConfig.HidePremium
-			}), "TextDark")
-		}),
-	}), "Second")
-
-	local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 14), {
-		Size = UDim2.new(1, -30, 2, 0),
-		Position = UDim2.new(0, 25, 0, -24),
-		Font = Enum.Font.GothamBlack,
-		TextSize = 20
-	}), "Text")
-
-	local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
-		Size = UDim2.new(1, 0, 0, 1),
-		Position = UDim2.new(0, 0, 1, -1)
-	}), "Stroke")
-
-	local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
-		Parent = Grayx,
-		Position = UDim2.new(0.5, -307, 0.5, -172),
-		Size = UDim2.new(0, 615, 0, 344),
-		ClipsDescendants = true
-	}), {
-		--SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
-		--	AnchorPoint = Vector2.new(0.5, 0.5),
-		--	Position = UDim2.new(0.5, 0, 0.5, 0),
-		--	Size = UDim2.new(1, 80, 1, 320),
-		--	ImageColor3 = Color3.fromRGB(33, 33, 33),
-		--	ImageTransparency = 0.7
-		--}),
-		SetChildren(SetProps(MakeElement("TFrame"), {
-			Size = UDim2.new(1, 0, 0, 50),
-			Name = "TopBar"
-		}), {
-			WindowName,
-			WindowTopBarLine,
-			AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
-				Size = UDim2.new(0, 70, 0, 30),
-				Position = UDim2.new(1, -90, 0, 10)
-			}), {
-				AddThemeObject(MakeElement("Stroke"), "Stroke"),
-				AddThemeObject(SetProps(MakeElement("Frame"), {
-					Size = UDim2.new(0, 1, 1, 0),
-					Position = UDim2.new(0.5, 0, 0, 0)
-				}), "Stroke"), 
-				CloseBtn,
-				MinimizeBtn
-			}), "Second"), 
-		}),
-		DragPoint,
-		WindowStuff
-	}), "Main")
-
-	if WindowConfig.ShowIcon then
-		WindowName.Position = UDim2.new(0, 50, 0, -24)
-		local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
-			Size = UDim2.new(0, 20, 0, 20),
-			Position = UDim2.new(0, 25, 0, 15)
-		})
-		WindowIcon.Parent = MainWindow.TopBar
-	end	
-
-	MakeDraggable(DragPoint, MainWindow)
-
-	AddConnection(CloseBtn.MouseButton1Up, function()
-		MainWindow.Visible = false
-		UIHidden = true
-		GrayxLib:MakeNotification({
-			Name = "Interface Hidden",
-			Content = "Tap RightShift to reopen the interface",
-			Time = 5
-		})
-		WindowConfig.CloseCallback()
-	end)
-
-	AddConnection(UserInputService.InputBegan, function(Input)
-		if Input.KeyCode == Enum.KeyCode.RightShift and UIHidden then
-			MainWindow.Visible = true
-		end
-	end)
-
-	AddConnection(MinimizeBtn.MouseButton1Up, function()
-		if Minimized then
-			TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 615, 0, 344)}):Play()
-			MinimizeBtn.Ico.Image = "rbxassetid://7072719338"
-			wait(.02)
-			MainWindow.ClipsDescendants = false
-			WindowStuff.Visible = true
-			WindowTopBarLine.Visible = true
-		else
-			MainWindow.ClipsDescendants = true
-			WindowTopBarLine.Visible = false
-			MinimizeBtn.Ico.Image = "rbxassetid://7072720870"
-
-			TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, WindowName.TextBounds.X + 140, 0, 50)}):Play()
-			wait(0.1)
-			WindowStuff.Visible = false	
-		end
-		Minimized = not Minimized    
-	end)
-
-	local function LoadSequence()
-		MainWindow.Visible = false
-		local LoadSequenceLogo = SetProps(MakeElement("Image", WindowConfig.IntroIcon), {
-			Parent = Grayx,
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0.5, 0, 0.4, 0),
-			Size = UDim2.new(0, 28, 0, 28),
-			ImageColor3 = Color3.fromRGB(255, 255, 255),
-			ImageTransparency = 1
-		})
-
-		local LoadSequenceText = SetProps(MakeElement("Label", WindowConfig.IntroText, 14), {
-			Parent = Grayx,
-			Size = UDim2.new(1, 0, 1, 0),
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0.5, 19, 0.5, 0),
-			TextXAlignment = Enum.TextXAlignment.Center,
-			Font = Enum.Font.GothamBold,
-			TextTransparency = 1
-		})
-
-		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
-		wait(0.8)
-		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -(LoadSequenceText.TextBounds.X/2), 0.5, 0)}):Play()
-		wait(0.3)
-		TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-		wait(2)
-		TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
-		MainWindow.Visible = true
-		LoadSequenceLogo:Destroy()
-		LoadSequenceText:Destroy()
-	end 
-
-	if WindowConfig.IntroEnabled then
-		LoadSequence()
-	end	
-
-	local TabFunction = {}
-	function TabFunction:MakeTab(TabConfig)
-		TabConfig = TabConfig or {}
-		TabConfig.Name = TabConfig.Name or "Tab"
-		TabConfig.Icon = TabConfig.Icon or ""
-		TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
-
-		local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
-			Size = UDim2.new(1, 0, 0, 30),
-			Parent = TabHolder
-		}), {
-			AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
-				AnchorPoint = Vector2.new(0, 0.5),
-				Size = UDim2.new(0, 18, 0, 18),
-				Position = UDim2.new(0, 10, 0.5, 0),
-				ImageTransparency = 0.4,
-				Name = "Ico"
-			}), "Text"),
-			AddThemeObject(SetProps(MakeElement("Label", TabConfig.Name, 14), {
-				Size = UDim2.new(1, -35, 1, 0),
-				Position = UDim2.new(0, 35, 0, 0),
-				Font = Enum.Font.GothamSemibold,
-				TextTransparency = 0.4,
-				Name = "Title"
-			}), "Text")
-		})
-
-		if GetIcon(TabConfig.Icon) ~= nil then
-			TabFrame.Ico.Image = GetIcon(TabConfig.Icon)
-		end	
-
-		local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
-			Size = UDim2.new(1, -150, 1, -50),
-			Position = UDim2.new(0, 150, 0, 50),
-			Parent = MainWindow,
-			Visible = false,
-			Name = "ItemContainer"
-		}), {
-			MakeElement("List", 0, 6),
-			MakeElement("Padding", 15, 10, 10, 15)
-		}), "Divider")
-
-		AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-			Container.CanvasSize = UDim2.new(0, 0, 0, Container.UIListLayout.AbsoluteContentSize.Y + 30)
-		end)
-
-		if FirstTab then
-			FirstTab = false
-			TabFrame.Ico.ImageTransparency = 0
-			TabFrame.Title.TextTransparency = 0
-			TabFrame.Title.Font = Enum.Font.GothamBlack
-			Container.Visible = true
-		end    
-
-		AddConnection(TabFrame.MouseButton1Click, function()
-			for _, Tab in next, TabHolder:GetChildren() do
-				if Tab:IsA("TextButton") then
-					Tab.Title.Font = Enum.Font.GothamSemibold
-					TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0.4}):Play()
-					TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0.4}):Play()
-				end    
-			end
-			for _, ItemContainer in next, MainWindow:GetChildren() do
-				if ItemContainer.Name == "ItemContainer" then
-					ItemContainer.Visible = false
-				end    
-			end  
-			TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
-			TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-			TabFrame.Title.Font = Enum.Font.GothamBlack
-			Container.Visible = true   
-		end)
-
-		local function GetElements(ItemParent)
-			local ElementFunction = {}
-			function ElementFunction:AddLabel(Text)
-				local LabelFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 30),
-					BackgroundTransparency = 0.7,
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", Text, 15), {
-						Size = UDim2.new(1, -12, 1, 0),
-						Position = UDim2.new(0, 12, 0, 0),
-						Font = Enum.Font.GothamBold,
-						Name = "Content"
-					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke")
-				}), "Second")
-
-				local LabelFunction = {}
-				function LabelFunction:Set(ToChange)
-					LabelFrame.Content.Text = ToChange
-				end
-				return LabelFunction
-			end
-			function ElementFunction:AddParagraph(Text, Content)
-				Text = Text or "Text"
-				Content = Content or "Content"
-
-				local ParagraphFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 30),
-					BackgroundTransparency = 0.7,
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", Text, 15), {
-						Size = UDim2.new(1, -12, 0, 14),
-						Position = UDim2.new(0, 12, 0, 10),
-						Font = Enum.Font.GothamBold,
-						Name = "Title"
-					}), "Text"),
-					AddThemeObject(SetProps(MakeElement("Label", "", 13), {
-						Size = UDim2.new(1, -24, 0, 0),
-						Position = UDim2.new(0, 12, 0, 26),
-						Font = Enum.Font.GothamSemibold,
-						Name = "Content",
-						TextWrapped = true
-					}), "TextDark"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke")
-				}), "Second")
-
-				AddConnection(ParagraphFrame.Content:GetPropertyChangedSignal("Text"), function()
-					ParagraphFrame.Content.Size = UDim2.new(1, -24, 0, ParagraphFrame.Content.TextBounds.Y)
-					ParagraphFrame.Size = UDim2.new(1, 0, 0, ParagraphFrame.Content.TextBounds.Y + 35)
-				end)
-
-				ParagraphFrame.Content.Text = Content
-
-				local ParagraphFunction = {}
-				function ParagraphFunction:Set(ToChange)
-					ParagraphFrame.Content.Text = ToChange
-				end
-				return ParagraphFunction
-			end    
-			function ElementFunction:AddButton(ButtonConfig)
-				ButtonConfig = ButtonConfig or {}
-				ButtonConfig.Name = ButtonConfig.Name or "Button"
-				ButtonConfig.Callback = ButtonConfig.Callback or function() end
-				ButtonConfig.Icon = ButtonConfig.Icon or "rbxassetid://3944703587"
-
-				local Button = {}
-
-				local Click = SetProps(MakeElement("Button"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				})
-
-				local ButtonFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 33),
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", ButtonConfig.Name, 15), {
-						Size = UDim2.new(1, -12, 1, 0),
-						Position = UDim2.new(0, 12, 0, 0),
-						Font = Enum.Font.GothamBold,
-						Name = "Content"
-					}), "Text"),
-					AddThemeObject(SetProps(MakeElement("Image", ButtonConfig.Icon), {
-						Size = UDim2.new(0, 20, 0, 20),
-						Position = UDim2.new(1, -30, 0, 7),
-					}), "TextDark"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					Click
-				}), "Second")
-
-				AddConnection(Click.MouseEnter, function()
-					TweenService:Create(ButtonFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-				end)
-
-				AddConnection(Click.MouseLeave, function()
-					TweenService:Create(ButtonFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = GrayxLib.Themes[GrayxLib.SelectedTheme].Second}):Play()
-				end)
-
-				AddConnection(Click.MouseButton1Up, function()
-					TweenService:Create(ButtonFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-					spawn(function()
-						ButtonConfig.Callback()
-					end)
-				end)
-
-				AddConnection(Click.MouseButton1Down, function()
-					TweenService:Create(ButtonFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 6)}):Play()
-				end)
-
-				function Button:Set(ButtonText)
-					ButtonFrame.Content.Text = ButtonText
-				end	
-
-				return Button
-			end    
-			function ElementFunction:AddToggle(ToggleConfig)
-				ToggleConfig = ToggleConfig or {}
-				ToggleConfig.Name = ToggleConfig.Name or "Toggle"
-				ToggleConfig.Default = ToggleConfig.Default or false
-				ToggleConfig.Callback = ToggleConfig.Callback or function() end
-				ToggleConfig.Color = ToggleConfig.Color or Color3.fromRGB(9, 99, 195)
-				ToggleConfig.Flag = ToggleConfig.Flag or nil
-				ToggleConfig.Save = ToggleConfig.Save or false
-
-				local Toggle = {Value = ToggleConfig.Default, Save = ToggleConfig.Save}
-
-				local Click = SetProps(MakeElement("Button"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				})
-
-				local ToggleBox = SetChildren(SetProps(MakeElement("RoundFrame", ToggleConfig.Color, 0, 4), {
-					Size = UDim2.new(0, 24, 0, 24),
-					Position = UDim2.new(1, -24, 0.5, 0),
-					AnchorPoint = Vector2.new(0.5, 0.5)
-				}), {
-					SetProps(MakeElement("Stroke"), {
-						Color = ToggleConfig.Color,
-						Name = "Stroke",
-						Transparency = 0.5
-					}),
-					SetProps(MakeElement("Image", "rbxassetid://3944680095"), {
-						Size = UDim2.new(0, 20, 0, 20),
-						AnchorPoint = Vector2.new(0.5, 0.5),
-						Position = UDim2.new(0.5, 0, 0.5, 0),
-						ImageColor3 = Color3.fromRGB(255, 255, 255),
-						Name = "Ico"
-					}),
-				})
-
-				local ToggleFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 38),
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", ToggleConfig.Name, 15), {
-						Size = UDim2.new(1, -12, 1, 0),
-						Position = UDim2.new(0, 12, 0, 0),
-						Font = Enum.Font.GothamBold,
-						Name = "Content"
-					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					ToggleBox,
-					Click
-				}), "Second")
-
-				function Toggle:Set(Value)
-					Toggle.Value = Value
-					TweenService:Create(ToggleBox, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Toggle.Value and ToggleConfig.Color or GrayxLib.Themes.Default.Divider}):Play()
-					TweenService:Create(ToggleBox.Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Color = Toggle.Value and ToggleConfig.Color or GrayxLib.Themes.Default.Stroke}):Play()
-					TweenService:Create(ToggleBox.Ico, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = Toggle.Value and 0 or 1, Size = Toggle.Value and UDim2.new(0, 20, 0, 20) or UDim2.new(0, 8, 0, 8)}):Play()
-					ToggleConfig.Callback(Toggle.Value)
-				end    
-
-				Toggle:Set(Toggle.Value)
-
-				AddConnection(Click.MouseEnter, function()
-					TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-				end)
-
-				AddConnection(Click.MouseLeave, function()
-					TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = GrayxLib.Themes[GrayxLib.SelectedTheme].Second}):Play()
-				end)
-
-				AddConnection(Click.MouseButton1Up, function()
-					TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-					SaveCfg(game.GameId)
-					Toggle:Set(not Toggle.Value)
-				end)
-
-				AddConnection(Click.MouseButton1Down, function()
-					TweenService:Create(ToggleFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 6)}):Play()
-				end)
-
-				if ToggleConfig.Flag then
-					GrayxLib.Flags[ToggleConfig.Flag] = Toggle
-				end	
-				return Toggle
-			end  
-			function ElementFunction:AddSlider(SliderConfig)
-				SliderConfig = SliderConfig or {}
-				SliderConfig.Name = SliderConfig.Name or "Slider"
-				SliderConfig.Min = SliderConfig.Min or 0
-				SliderConfig.Max = SliderConfig.Max or 100
-				SliderConfig.Increment = SliderConfig.Increment or 1
-				SliderConfig.Default = SliderConfig.Default or 50
-				SliderConfig.Callback = SliderConfig.Callback or function() end
-				SliderConfig.ValueName = SliderConfig.ValueName or ""
-				SliderConfig.Color = SliderConfig.Color or Color3.fromRGB(9, 149, 98)
-				SliderConfig.Flag = SliderConfig.Flag or nil
-				SliderConfig.Save = SliderConfig.Save or false
-
-				local Slider = {Value = SliderConfig.Default, Save = SliderConfig.Save}
-				local Dragging = false
-
-				local SliderDrag = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), {
-					Size = UDim2.new(0, 0, 1, 0),
-					BackgroundTransparency = 0.3,
-					ClipsDescendants = true
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", "value", 13), {
-						Size = UDim2.new(1, -12, 0, 14),
-						Position = UDim2.new(0, 12, 0, 6),
-						Font = Enum.Font.GothamBold,
-						Name = "Value",
-						TextTransparency = 0
-					}), "Text")
-				})
-
-				local SliderBar = SetChildren(SetProps(MakeElement("RoundFrame", SliderConfig.Color, 0, 5), {
-					Size = UDim2.new(1, -24, 0, 26),
-					Position = UDim2.new(0, 12, 0, 30),
-					BackgroundTransparency = 0.9
-				}), {
-					SetProps(MakeElement("Stroke"), {
-						Color = SliderConfig.Color
-					}),
-					AddThemeObject(SetProps(MakeElement("Label", "value", 13), {
-						Size = UDim2.new(1, -12, 0, 14),
-						Position = UDim2.new(0, 12, 0, 6),
-						Font = Enum.Font.GothamBold,
-						Name = "Value",
-						TextTransparency = 0.8
-					}), "Text"),
-					SliderDrag
-				})
-
-				local SliderFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
-					Size = UDim2.new(1, 0, 0, 65),
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", SliderConfig.Name, 15), {
-						Size = UDim2.new(1, -12, 0, 14),
-						Position = UDim2.new(0, 12, 0, 10),
-						Font = Enum.Font.GothamBold,
-						Name = "Content"
-					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					SliderBar
-				}), "Second")
-
-				SliderBar.InputBegan:Connect(function(Input)
-					if Input.UserInputType == Enum.UserInputType.MouseButton1 then 
-						Dragging = true 
-					end 
-				end)
-				SliderBar.InputEnded:Connect(function(Input) 
-					if Input.UserInputType == Enum.UserInputType.MouseButton1 then 
-						Dragging = false 
-					end 
-				end)
-
-				UserInputService.InputChanged:Connect(function(Input)
-					if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then 
-						local SizeScale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
-						Slider:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale)) 
-						SaveCfg(game.GameId)
-					end
-				end)
-
-				function Slider:Set(Value)
-					self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
-					TweenService:Create(SliderDrag,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = UDim2.fromScale((self.Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1)}):Play()
-					SliderBar.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-					SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-					SliderConfig.Callback(self.Value)
-				end      
-
-				Slider:Set(Slider.Value)
-				if SliderConfig.Flag then				
-					GrayxLib.Flags[SliderConfig.Flag] = Slider
-				end
-				return Slider
-			end  
-			function ElementFunction:AddDropdown(DropdownConfig)
-				DropdownConfig = DropdownConfig or {}
-				DropdownConfig.Name = DropdownConfig.Name or "Dropdown"
-				DropdownConfig.Options = DropdownConfig.Options or {}
-				DropdownConfig.Default = DropdownConfig.Default or ""
-				DropdownConfig.Callback = DropdownConfig.Callback or function() end
-				DropdownConfig.Flag = DropdownConfig.Flag or nil
-				DropdownConfig.Save = DropdownConfig.Save or false
-
-				local Dropdown = {Value = DropdownConfig.Default, Options = DropdownConfig.Options, Buttons = {}, Toggled = false, Type = "Dropdown", Save = DropdownConfig.Save}
-				local MaxElements = 5
-
-				if not table.find(Dropdown.Options, Dropdown.Value) then
-					Dropdown.Value = "..."
-				end
-
-				local DropdownList = MakeElement("List")
-
-				local DropdownContainer = AddThemeObject(SetProps(SetChildren(MakeElement("ScrollFrame", Color3.fromRGB(40, 40, 40), 4), {
-					DropdownList
-				}), {
-					Parent = ItemParent,
-					Position = UDim2.new(0, 0, 0, 38),
-					Size = UDim2.new(1, 0, 1, -38),
-					ClipsDescendants = true
-				}), "Divider")
-
-				local Click = SetProps(MakeElement("Button"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				})
-
-				local DropdownFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 38),
-					Parent = ItemParent,
-					ClipsDescendants = true
-				}), {
-					DropdownContainer,
-					SetProps(SetChildren(MakeElement("TFrame"), {
-						AddThemeObject(SetProps(MakeElement("Label", DropdownConfig.Name, 15), {
-							Size = UDim2.new(1, -12, 1, 0),
-							Position = UDim2.new(0, 12, 0, 0),
-							Font = Enum.Font.GothamBold,
-							Name = "Content"
-						}), "Text"),
-						AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072706796"), {
-							Size = UDim2.new(0, 20, 0, 20),
-							AnchorPoint = Vector2.new(0, 0.5),
-							Position = UDim2.new(1, -30, 0.5, 0),
-							ImageColor3 = Color3.fromRGB(240, 240, 240),
-							Name = "Ico"
-						}), "TextDark"),
-						AddThemeObject(SetProps(MakeElement("Label", "Selected", 13), {
-							Size = UDim2.new(1, -40, 1, 0),
-							Font = Enum.Font.Gotham,
-							Name = "Selected",
-							TextXAlignment = Enum.TextXAlignment.Right
-						}), "TextDark"),
-						AddThemeObject(SetProps(MakeElement("Frame"), {
-							Size = UDim2.new(1, 0, 0, 1),
-							Position = UDim2.new(0, 0, 1, -1),
-							Name = "Line",
-							Visible = false
-						}), "Stroke"), 
-						Click
-					}), {
-						Size = UDim2.new(1, 0, 0, 38),
-						ClipsDescendants = true,
-						Name = "F"
-					}),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					MakeElement("Corner")
-				}), "Second")
-
-				AddConnection(DropdownList:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-					DropdownContainer.CanvasSize = UDim2.new(0, 0, 0, DropdownList.AbsoluteContentSize.Y)
-				end)  
-
-				local function AddOptions(Options)
-					for _, Option in pairs(Options) do
-						local OptionBtn = AddThemeObject(SetProps(SetChildren(MakeElement("Button", Color3.fromRGB(40, 40, 40)), {
-							MakeElement("Corner", 0, 6),
-							AddThemeObject(SetProps(MakeElement("Label", Option, 13, 0.4), {
-								Position = UDim2.new(0, 8, 0, 0),
-								Size = UDim2.new(1, -8, 1, 0),
-								Name = "Title"
-							}), "Text")
-						}), {
-							Parent = DropdownContainer,
-							Size = UDim2.new(1, 0, 0, 28),
-							BackgroundTransparency = 1,
-							ClipsDescendants = true
-						}), "Divider")
-
-						AddConnection(OptionBtn.MouseButton1Click, function()
-							Dropdown:Set(Option)
-							SaveCfg(game.GameId)
-						end)
-
-						Dropdown.Buttons[Option] = OptionBtn
-					end
-				end	
-
-				function Dropdown:Refresh(Options, Delete)
-					if Delete then
-						for _,v in pairs(Dropdown.Buttons) do
-							v:Destroy()
-						end    
-						table.clear(Dropdown.Options)
-						table.clear(Dropdown.Buttons)
-					end
-					Dropdown.Options = Options
-					AddOptions(Dropdown.Options)
-				end  
-
-				function Dropdown:Set(Value)
-					if not table.find(Dropdown.Options, Value) then
-						Dropdown.Value = "..."
-						DropdownFrame.F.Selected.Text = Dropdown.Value
-						for _, v in pairs(Dropdown.Buttons) do
-							TweenService:Create(v,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 1}):Play()
-							TweenService:Create(v.Title,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{TextTransparency = 0.4}):Play()
-						end	
-						return
-					end
-
-					Dropdown.Value = Value
-					DropdownFrame.F.Selected.Text = Dropdown.Value
-
-					for _, v in pairs(Dropdown.Buttons) do
-						TweenService:Create(v,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 1}):Play()
-						TweenService:Create(v.Title,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{TextTransparency = 0.4}):Play()
-					end	
-					TweenService:Create(Dropdown.Buttons[Value],TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{BackgroundTransparency = 0}):Play()
-					TweenService:Create(Dropdown.Buttons[Value].Title,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{TextTransparency = 0}):Play()
-					return DropdownConfig.Callback(Dropdown.Value)
-				end
-
-				AddConnection(Click.MouseButton1Click, function()
-					Dropdown.Toggled = not Dropdown.Toggled
-					DropdownFrame.F.Line.Visible = Dropdown.Toggled
-					TweenService:Create(DropdownFrame.F.Ico,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Rotation = Dropdown.Toggled and 180 or 0}):Play()
-					if #Dropdown.Options > MaxElements then
-						TweenService:Create(DropdownFrame,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = Dropdown.Toggled and UDim2.new(1, 0, 0, 38 + (MaxElements * 28)) or UDim2.new(1, 0, 0, 38)}):Play()
-					else
-						TweenService:Create(DropdownFrame,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = Dropdown.Toggled and UDim2.new(1, 0, 0, DropdownList.AbsoluteContentSize.Y + 38) or UDim2.new(1, 0, 0, 38)}):Play()
-					end
-				end)
-
-				Dropdown:Refresh(Dropdown.Options, false)
-				Dropdown:Set(Dropdown.Value)
-				if DropdownConfig.Flag then				
-					GrayxLib.Flags[DropdownConfig.Flag] = Dropdown
-				end
-				return Dropdown
-			end
-			function ElementFunction:AddBind(BindConfig)
-				BindConfig.Name = BindConfig.Name or "Bind"
-				BindConfig.Default = BindConfig.Default or Enum.KeyCode.Unknown
-				BindConfig.Hold = BindConfig.Hold or false
-				BindConfig.Callback = BindConfig.Callback or function() end
-				BindConfig.Flag = BindConfig.Flag or nil
-				BindConfig.Save = BindConfig.Save or false
-
-				local Bind = {Value, Binding = false, Type = "Bind", Save = BindConfig.Save}
-				local Holding = false
-
-				local Click = SetProps(MakeElement("Button"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				})
-
-				local BindBox = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
-					Size = UDim2.new(0, 24, 0, 24),
-					Position = UDim2.new(1, -12, 0.5, 0),
-					AnchorPoint = Vector2.new(1, 0.5)
-				}), {
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					AddThemeObject(SetProps(MakeElement("Label", BindConfig.Name, 14), {
-						Size = UDim2.new(1, 0, 1, 0),
-						Font = Enum.Font.GothamBold,
-						TextXAlignment = Enum.TextXAlignment.Center,
-						Name = "Value"
-					}), "Text")
-				}), "Main")
-
-				local BindFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 38),
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", BindConfig.Name, 15), {
-						Size = UDim2.new(1, -12, 1, 0),
-						Position = UDim2.new(0, 12, 0, 0),
-						Font = Enum.Font.GothamBold,
-						Name = "Content"
-					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					BindBox,
-					Click
-				}), "Second")
-
-				AddConnection(BindBox.Value:GetPropertyChangedSignal("Text"), function()
-					--BindBox.Size = UDim2.new(0, BindBox.Value.TextBounds.X + 16, 0, 24)
-					TweenService:Create(BindBox, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, BindBox.Value.TextBounds.X + 16, 0, 24)}):Play()
-				end)
-
-				AddConnection(Click.InputEnded, function(Input)
-					if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-						if Bind.Binding then return end
-						Bind.Binding = true
-						BindBox.Value.Text = ""
-					end
-				end)
-
-				AddConnection(UserInputService.InputBegan, function(Input)
-					if UserInputService:GetFocusedTextBox() then return end
-					if (Input.KeyCode.Name == Bind.Value or Input.UserInputType.Name == Bind.Value) and not Bind.Binding then
-						if BindConfig.Hold then
-							Holding = true
-							BindConfig.Callback(Holding)
-						else
-							BindConfig.Callback()
-						end
-					elseif Bind.Binding then
-						local Key
-						pcall(function()
-							if not CheckKey(BlacklistedKeys, Input.KeyCode) then
-								Key = Input.KeyCode
-							end
-						end)
-						pcall(function()
-							if CheckKey(WhitelistedMouse, Input.UserInputType) and not Key then
-								Key = Input.UserInputType
-							end
-						end)
-						Key = Key or Bind.Value
-						Bind:Set(Key)
-						SaveCfg(game.GameId)
-					end
-				end)
-
-				AddConnection(UserInputService.InputEnded, function(Input)
-					if Input.KeyCode.Name == Bind.Value or Input.UserInputType.Name == Bind.Value then
-						if BindConfig.Hold and Holding then
-							Holding = false
-							BindConfig.Callback(Holding)
-						end
-					end
-				end)
-
-				AddConnection(Click.MouseEnter, function()
-					TweenService:Create(BindFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-				end)
-
-				AddConnection(Click.MouseLeave, function()
-					TweenService:Create(BindFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = GrayxLib.Themes[GrayxLib.SelectedTheme].Second}):Play()
-				end)
-
-				AddConnection(Click.MouseButton1Up, function()
-					TweenService:Create(BindFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-				end)
-
-				AddConnection(Click.MouseButton1Down, function()
-					TweenService:Create(BindFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 6)}):Play()
-				end)
-
-				function Bind:Set(Key)
-					Bind.Binding = false
-					Bind.Value = Key or Bind.Value
-					Bind.Value = Bind.Value.Name or Bind.Value
-					BindBox.Value.Text = Bind.Value
-				end
-
-				Bind:Set(BindConfig.Default)
-				if BindConfig.Flag then				
-					GrayxLib.Flags[BindConfig.Flag] = Bind
-				end
-				return Bind
-			end  
-			function ElementFunction:AddTextbox(TextboxConfig)
-				TextboxConfig = TextboxConfig or {}
-				TextboxConfig.Name = TextboxConfig.Name or "Textbox"
-				TextboxConfig.Default = TextboxConfig.Default or ""
-				TextboxConfig.TextDisappear = TextboxConfig.TextDisappear or false
-				TextboxConfig.Callback = TextboxConfig.Callback or function() end
-
-				local Click = SetProps(MakeElement("Button"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				})
-
-				local TextboxActual = AddThemeObject(Create("TextBox", {
-					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundTransparency = 1,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
-					PlaceholderColor3 = Color3.fromRGB(210,210,210),
-					PlaceholderText = "Input",
-					Font = Enum.Font.GothamSemibold,
-					TextXAlignment = Enum.TextXAlignment.Center,
-					TextSize = 14,
-					ClearTextOnFocus = false
-				}), "Text")
-
-				local TextContainer = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
-					Size = UDim2.new(0, 24, 0, 24),
-					Position = UDim2.new(1, -12, 0.5, 0),
-					AnchorPoint = Vector2.new(1, 0.5)
-				}), {
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					TextboxActual
-				}), "Main")
-
-
-				local TextboxFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 38),
-					Parent = ItemParent
-				}), {
-					AddThemeObject(SetProps(MakeElement("Label", TextboxConfig.Name, 15), {
-						Size = UDim2.new(1, -12, 1, 0),
-						Position = UDim2.new(0, 12, 0, 0),
-						Font = Enum.Font.GothamBold,
-						Name = "Content"
-					}), "Text"),
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-					TextContainer,
-					Click
-				}), "Second")
-
-				AddConnection(TextboxActual:GetPropertyChangedSignal("Text"), function()
-					--TextContainer.Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)
-					TweenService:Create(TextContainer, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)}):Play()
-				end)
-
-				AddConnection(TextboxActual.FocusLost, function()
-					TextboxConfig.Callback(TextboxActual.Text)
-					if TextboxConfig.TextDisappear then
-						TextboxActual.Text = ""
-					end	
-				end)
-
-				TextboxActual.Text = TextboxConfig.Default
-
-				AddConnection(Click.MouseEnter, function()
-					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-				end)
-
-				AddConnection(Click.MouseLeave, function()
-					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = GrayxLib.Themes[GrayxLib.SelectedTheme].Second}):Play()
-				end)
-
-				AddConnection(Click.MouseButton1Up, function()
-					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 3, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 3)}):Play()
-					TextboxActual:CaptureFocus()
-				end)
-
-				AddConnection(Click.MouseButton1Down, function()
-					TweenService:Create(TextboxFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(GrayxLib.Themes[GrayxLib.SelectedTheme].Second.R * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.G * 255 + 6, GrayxLib.Themes[GrayxLib.SelectedTheme].Second.B * 255 + 6)}):Play()
-				end)
-			end 
-			function ElementFunction:AddColorpicker(ColorpickerConfig)
-				ColorpickerConfig = ColorpickerConfig or {}
-				ColorpickerConfig.Name = ColorpickerConfig.Name or "Colorpicker"
-				ColorpickerConfig.Default = ColorpickerConfig.Default or Color3.fromRGB(255,255,255)
-				ColorpickerConfig.Callback = ColorpickerConfig.Callback or function() end
-				ColorpickerConfig.Flag = ColorpickerConfig.Flag or nil
-				ColorpickerConfig.Save = ColorpickerConfig.Save or false
-
-				local ColorH, ColorS, ColorV = 1, 1, 1
-				local Colorpicker = {Value = ColorpickerConfig.Default, Toggled = false, Type = "Colorpicker", Save = ColorpickerConfig.Save}
-
-				local ColorSelection = Create("ImageLabel", {
-					Size = UDim2.new(0, 18, 0, 18),
-					Position = UDim2.new(select(3, Color3.toHSV(Colorpicker.Value))),
-					ScaleType = Enum.ScaleType.Fit,
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					BackgroundTransparency = 1,
-					Image = "http://www.roblox.com/asset/?id=4805639000"
-				})
-
-				local HueSelection = Create("ImageLabel", {
-					Size = UDim2.new(0, 18, 0, 18),
-					Position = UDim2.new(0.5, 0, 1 - select(1, Color3.toHSV(Colorpicker.Value))),
-					ScaleType = Enum.ScaleType.Fit,
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					BackgroundTransparency = 1,
-					Image = "http://www.roblox.com/asset/?id=4805639000"
-				})
-
-				local Color = Create("ImageLabel", {
-					Size = UDim2.new(1, -25, 1, 0),
-					Visible = false,
-					Image = "rbxassetid://4155801252"
-				}, {
-					Create("UICorner", {CornerRadius = UDim.new(0, 5)}),
-					ColorSelection
-				})
-
-				local Hue = Create("Frame", {
-					Size = UDim2.new(0, 20, 1, 0),
-					Position = UDim2.new(1, -20, 0, 0),
-					Visible = false
-				}, {
-					Create("UIGradient", {Rotation = 270, Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 4)), ColorSequenceKeypoint.new(0.20, Color3.fromRGB(234, 255, 0)), ColorSequenceKeypoint.new(0.40, Color3.fromRGB(21, 255, 0)), ColorSequenceKeypoint.new(0.60, Color3.fromRGB(0, 255, 255)), ColorSequenceKeypoint.new(0.80, Color3.fromRGB(0, 17, 255)), ColorSequenceKeypoint.new(0.90, Color3.fromRGB(255, 0, 251)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 4))},}),
-					Create("UICorner", {CornerRadius = UDim.new(0, 5)}),
-					HueSelection
-				})
-
-				local ColorpickerContainer = Create("Frame", {
-					Position = UDim2.new(0, 0, 0, 32),
-					Size = UDim2.new(1, 0, 1, -32),
-					BackgroundTransparency = 1,
-					ClipsDescendants = true
-				}, {
-					Hue,
-					Color,
-					Create("UIPadding", {
-						PaddingLeft = UDim.new(0, 35),
-						PaddingRight = UDim.new(0, 35),
-						PaddingBottom = UDim.new(0, 10),
-						PaddingTop = UDim.new(0, 17)
-					})
-				})
-
-				local Click = SetProps(MakeElement("Button"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				})
-
-				local ColorpickerBox = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 4), {
-					Size = UDim2.new(0, 24, 0, 24),
-					Position = UDim2.new(1, -12, 0.5, 0),
-					AnchorPoint = Vector2.new(1, 0.5)
-				}), {
-					AddThemeObject(MakeElement("Stroke"), "Stroke")
-				}), "Main")
-
-				local ColorpickerFrame = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 5), {
-					Size = UDim2.new(1, 0, 0, 38),
-					Parent = ItemParent
-				}), {
-					SetProps(SetChildren(MakeElement("TFrame"), {
-						AddThemeObject(SetProps(MakeElement("Label", ColorpickerConfig.Name, 15), {
-							Size = UDim2.new(1, -12, 1, 0),
-							Position = UDim2.new(0, 12, 0, 0),
-							Font = Enum.Font.GothamBold,
-							Name = "Content"
-						}), "Text"),
-						ColorpickerBox,
-						Click,
-						AddThemeObject(SetProps(MakeElement("Frame"), {
-							Size = UDim2.new(1, 0, 0, 1),
-							Position = UDim2.new(0, 0, 1, -1),
-							Name = "Line",
-							Visible = false
-						}), "Stroke"), 
-					}), {
-						Size = UDim2.new(1, 0, 0, 38),
-						ClipsDescendants = true,
-						Name = "F"
-					}),
-					ColorpickerContainer,
-					AddThemeObject(MakeElement("Stroke"), "Stroke"),
-				}), "Second")
-
-				AddConnection(Click.MouseButton1Click, function()
-					Colorpicker.Toggled = not Colorpicker.Toggled
-					TweenService:Create(ColorpickerFrame,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = Colorpicker.Toggled and UDim2.new(1, 0, 0, 148) or UDim2.new(1, 0, 0, 38)}):Play()
-					Color.Visible = Colorpicker.Toggled
-					Hue.Visible = Colorpicker.Toggled
-					ColorpickerFrame.F.Line.Visible = Colorpicker.Toggled
-				end)
-
-				local function UpdateColorPicker()
-					ColorpickerBox.BackgroundColor3 = Color3.fromHSV(ColorH, ColorS, ColorV)
-					Color.BackgroundColor3 = Color3.fromHSV(ColorH, 1, 1)
-					Colorpicker:Set(ColorpickerBox.BackgroundColor3)
-					ColorpickerConfig.Callback(ColorpickerBox.BackgroundColor3)
-					SaveCfg(game.GameId)
-				end
-
-				ColorH = 1 - (math.clamp(HueSelection.AbsolutePosition.Y - Hue.AbsolutePosition.Y, 0, Hue.AbsoluteSize.Y) / Hue.AbsoluteSize.Y)
-				ColorS = (math.clamp(ColorSelection.AbsolutePosition.X - Color.AbsolutePosition.X, 0, Color.AbsoluteSize.X) / Color.AbsoluteSize.X)
-				ColorV = 1 - (math.clamp(ColorSelection.AbsolutePosition.Y - Color.AbsolutePosition.Y, 0, Color.AbsoluteSize.Y) / Color.AbsoluteSize.Y)
-
-				AddConnection(Color.InputBegan, function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						if ColorInput then
-							ColorInput:Disconnect()
-						end
-						ColorInput = AddConnection(RunService.RenderStepped, function()
-							local ColorX = (math.clamp(Mouse.X - Color.AbsolutePosition.X, 0, Color.AbsoluteSize.X) / Color.AbsoluteSize.X)
-							local ColorY = (math.clamp(Mouse.Y - Color.AbsolutePosition.Y, 0, Color.AbsoluteSize.Y) / Color.AbsoluteSize.Y)
-							ColorSelection.Position = UDim2.new(ColorX, 0, ColorY, 0)
-							ColorS = ColorX
-							ColorV = 1 - ColorY
-							UpdateColorPicker()
-						end)
-					end
-				end)
-
-				AddConnection(Color.InputEnded, function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						if ColorInput then
-							ColorInput:Disconnect()
-						end
-					end
-				end)
-
-				AddConnection(Hue.InputBegan, function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						if HueInput then
-							HueInput:Disconnect()
-						end;
-
-						HueInput = AddConnection(RunService.RenderStepped, function()
-							local HueY = (math.clamp(Mouse.Y - Hue.AbsolutePosition.Y, 0, Hue.AbsoluteSize.Y) / Hue.AbsoluteSize.Y)
-
-							HueSelection.Position = UDim2.new(0.5, 0, HueY, 0)
-							ColorH = 1 - HueY
-
-							UpdateColorPicker()
-						end)
-					end
-				end)
-
-				AddConnection(Hue.InputEnded, function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						if HueInput then
-							HueInput:Disconnect()
-						end
-					end
-				end)
-
-				function Colorpicker:Set(Value)
-					Colorpicker.Value = Value
-					ColorpickerBox.BackgroundColor3 = Colorpicker.Value
-					ColorpickerConfig.Callback(Colorpicker.Value)
-				end
-
-				Colorpicker:Set(Colorpicker.Value)
-				if ColorpickerConfig.Flag then				
-					GrayxLib.Flags[ColorpickerConfig.Flag] = Colorpicker
-				end
-				return Colorpicker
-			end  
-			return ElementFunction   
-		end	
-
-		local ElementFunction = {}
-
-		function ElementFunction:AddSection(SectionConfig)
-			SectionConfig.Name = SectionConfig.Name or "Section"
-
-			local SectionFrame = SetChildren(SetProps(MakeElement("TFrame"), {
-				Size = UDim2.new(1, 0, 0, 26),
-				Parent = Container
-			}), {
-				AddThemeObject(SetProps(MakeElement("Label", SectionConfig.Name, 14), {
-					Size = UDim2.new(1, -12, 0, 16),
-					Position = UDim2.new(0, 0, 0, 3),
-					Font = Enum.Font.GothamSemibold
-				}), "TextDark"),
-				SetChildren(SetProps(MakeElement("TFrame"), {
-					AnchorPoint = Vector2.new(0, 0),
-					Size = UDim2.new(1, 0, 1, -24),
-					Position = UDim2.new(0, 0, 0, 23),
-					Name = "Holder"
-				}), {
-					MakeElement("List", 0, 6)
-				}),
-			})
-
-			AddConnection(SectionFrame.Holder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-				SectionFrame.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y + 31)
-				SectionFrame.Holder.Size = UDim2.new(1, 0, 0, SectionFrame.Holder.UIListLayout.AbsoluteContentSize.Y)
-			end)
-
-			local SectionFunction = {}
-			for i, v in next, GetElements(SectionFrame.Holder) do
-				SectionFunction[i] = v 
-			end
-			return SectionFunction
-		end	
-
-		for i, v in next, GetElements(Container) do
-			ElementFunction[i] = v 
-		end
-
-		if TabConfig.PremiumOnly then
-			for i, v in next, ElementFunction do
-				ElementFunction[i] = function() end
-			end    
-			Container:FindFirstChild("UIListLayout"):Destroy()
-			Container:FindFirstChild("UIPadding"):Destroy()
-			SetChildren(SetProps(MakeElement("TFrame"), {
-				Size = UDim2.new(1, 0, 1, 0),
-				Parent = ItemParent
-			}), {
-				AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://3610239960"), {
-					Size = UDim2.new(0, 18, 0, 18),
-					Position = UDim2.new(0, 15, 0, 15),
-					ImageTransparency = 0.4
-				}), "Text"),
-				AddThemeObject(SetProps(MakeElement("Label", "Unauthorised Access", 14), {
-					Size = UDim2.new(1, -38, 0, 14),
-					Position = UDim2.new(0, 38, 0, 18),
-					TextTransparency = 0.4
-				}), "Text"),
-				AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://4483345875"), {
-					Size = UDim2.new(0, 56, 0, 56),
-					Position = UDim2.new(0, 84, 0, 110),
-				}), "Text"),
-				AddThemeObject(SetProps(MakeElement("Label", "Premium Features", 14), {
-					Size = UDim2.new(1, -150, 0, 14),
-					Position = UDim2.new(0, 150, 0, 112),
-					Font = Enum.Font.GothamBold
-				}), "Text"),
-				AddThemeObject(SetProps(MakeElement("Label", "This part of the script is locked to Sirius Premium users. Purchase Premium in the Discord server (discord.gg/sirius)", 12), {
-					Size = UDim2.new(1, -200, 0, 14),
-					Position = UDim2.new(0, 150, 0, 138),
-					TextWrapped = true,
-					TextTransparency = 0.4
-				}), "Text")
-			})
-		end
-		return ElementFunction   
-	end  
-	
-	--if writefile and isfile then
-	--	if not isfile("NewLibraryNotification1.txt") then
-	--		local http_req = (syn and syn.request) or (http and http.request) or http_request
-	--		if http_req then
-	--			http_req({
-	--				Url = 'http://127.0.0.1:6463/rpc?v=1',
-	--				Method = 'POST',
-	--				Headers = {
-	--					['Content-Type'] = 'application/json',
-	--					Origin = 'https://discord.com'
-	--				},
-	--				Body = HttpService:JSONEncode({
-	--					cmd = 'INVITE_BROWSER',
-	--					nonce = HttpService:GenerateGUID(false),
-	--					args = {code = 'sirius'}
-	--				})
-	--			})
-	--		end
-	--		GrayxLib:MakeNotification({
-	--			Name = "UI Library Available",
-	--			Content = "New UI Library Available - Joining Discord (#announcements)",
-	--			Time = 8
-	--		})
-	--		spawn(function()
-	--			local UI = game:GetObjects("rbxassetid://11403719739")[1]
-
-	--			if gethui then
-	--				UI.Parent = gethui()
-	--			elseif syn.protect_gui then
-	--				syn.protect_gui(UI)
-	--				UI.Parent = game.CoreGui
-	--			else
-	--				UI.Parent = game.CoreGui
-	--			end
-
-	--			wait(11)
-
-	--			UI:Destroy()
-	--		end)
-	--		writefile("NewLibraryNotification1.txt","The value for the notification having been sent to you.")
-	--	end
-	--end
-	
-
-	
-	return TabFunction
-end   
-
-function GrayxLib:Destroy()
-	Grayx:Destroy()
+local UiOrders = {"Main Farm","Stack Auto farm","Sub Farming","Status","Player-Status","Fruit","Local Player","Travel","Pvp-Visual","Raid-Material","RaceV4-Mirage","Sea Events","Shop","Setting","Webhook","Game-Server","One Click"}
+local TabCollections = {
+}
+ElementsCollection = {}
+for _,Name in pairs(UiOrders) do
+    ElementsCollection[Name]={}
 end
 
-return GrayxLib
+local UiIntilize = {
+    ["Main Farm"] = {
+        {Mode="Label",Title="Only Turn On 1 Farm At The Same Time"},
+        {Mode="Toggle",Title="Auto Katakuri",Description="Turn On Auto Kill Cake Prince And Auto Kill Dough King By Default",Args={"Katakuri","Enable"}},
+        {Mode="Toggle",Title="Auto Bone",Description="",Args={"Bone","Enable"}},
+        {Mode="Toggle",Title="Kill Aura",Description="Farm Near Lv Mob Or Near Position",Args={"Kill Aura","Enable"}},
+        {Mode="Toggle",Title="Fully Auto Dough King",Description="",Args={"Full Dough King","Enable"}},
+        {Mode="Label",Title="Setting For Auto Farm"},
+        {Mode="Label",Title="Anchor Position"},
+        {Mode="Toggle",Title="TP Back Anchor Position",Description="If Exceed Anchor Position Will Tp Back To Anchor Position",Args={"Kill Aura","AnchorTPBack"}},
+        {Mode="Button",Title="Set Anchor Position",Callback=function ()
+            pcall(function ()
+                getgenv().Setting["Kill Aura"].AnchorPosition = tostring(game.Players.LocalPlayer.Character.HumanoidRootPart.Position)
+            end)
+        end},
+        {Mode="Dropdown",Title="Distace From Anchor",Table = (function ()
+            local Table = {}
+            for i=400,4000,400 do 
+                table.insert(Table,i)
+            end
+            return Table
+        end)(),Default=getgenv().Setting["Kill Aura"].DistanceFromAnchor/400,OnChange=function (state)
+            getgenv().Setting["Kill Aura"].DistanceFromAnchor = state
+        end},
+        {Mode="Toggle",Title="Use Sword",Args = {"Mastery","Sword"}},
+        {Mode="Toggle",Title="Sword Switcher",Description="Switch Sword When Have Enough Skills (Default) or Max Mastery",Args={"SwordSwitcher","Enable"}},
+        {Mode="Toggle",Title="Only Switch Max Mastery",Description="Only Switch When Max Mastery",Args={"SwordSwitcher","MaxMastery"}},
+        {Mode="Toggle",Title="Switch Sword When Low", Description = "Must Enable Use Sword", Args={"Mastery","Sword/Low"}},
+        {Mode="Label",Title="Go To Setting To Select Skills"},
+        {Mode="Toggle",Title="Mastery Farm",Description="Need Enable Auto Katakuri Or Bone", Args={"Mastery","Enable"}},
+        {Mode="Toggle",Title ="Aimbot Camera " ,Description = "Aimbot for Mastery Using Camera", Args={"Mastery","Camera"}},
+        {
+            Mode = "Dropdown",
+            Title = "Matery Health",
+            Args = {"Mastery", "Health"},
+            Table = {20,25,30,35,40,45,50},
+            Default = (function ()
+                local Default = {20,25,30,35,40,45,50}
+                local Found = 1
+                if not table.find(Default,getgenv().Setting.Mastery.Health) then 
+                    getgenv().Setting.Mastery.Health = 30
+                else
+                    Found = table.find(Default,getgenv().Setting.Mastery.Health) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.Mastery.Health = tonumber(value)
+                SettingManager:Save()
+            end
+        },        
+        {Mode="Toggle",Title="Mastery Fruit / Gun", Description = "Default Is Fruit, Turning On = Using Gun, Must Enable Mastery Farm",Args = {"Mastery","Fruit/Gun"}},
+        {
+            Mode = "Toggle",
+            Title = "Disable Silent Aim",
+            Args = {"Pvp", "DisableSilentAim"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.DisableSilentAim = state
+                SettingManager:Save()
+            end
+        },
+        {Mode="Button",Title="Fps Boost",Callback = getgenv().LiteFpsBoost}
+    },
+    ["Stack Auto farm"] = {
+        {Mode="Label",Title="Can Turn On Many Auto Farm Cuz Stackable"},
+        {Mode="Toggle",Title="Auto Elite",Description="Sea 3 Function Only",Args={"Elite","Enable"}},
+        {Mode="Toggle",Title="Auto Pirate Raid",Description="Sea 3 Function Only",Args={"Pirate Raid","Enable"}},
+        {Mode="Toggle",Title="Auto Open Haki Pad",Description="Sea 3 Function Only",Args={"Open Pad","Enable"}},
+        {Mode="Toggle",Title="Auto Spawn Rip Indra",Description="Sea 3 Function Only", Args = {"Spawn Rip Indra","Enable"}},
+        {Mode="Toggle",Title="Auto Rip Indra",Description = "Only Kill Rip Indra, Doesnt Do Anything Else",Args={"Rip Indra","Enable"}},
+        {Mode="Toggle",Title="Auto Tushita",Descrition="Sea 3 Function only",Args={"Tushita","Enable"}},
+        {Mode="Toggle",Title="Do Puzzle Electric Claw",Description="Sea 3 Function Only",Args={"Unlock Electric Claw","Enable"}},
+        {Mode="Toggle",Title="Auto Dough King" ,Description="", Args = {"Dough King","Enable"}},
+        {Mode="Toggle",Title="Auto Cake Prince",Description="",Args = {"Cake Prince","Enable"}},
+        {Mode="Toggle",Title="Auto Spawn Soul Reaper",Args = {"Spawn Soul Reaper","Enable"}},
+        {Mode="Toggle",Title="Auto Soul Reaper",Args = {"Soul Reaper","Enable"}},
+        {
+            Mode = "Dropdown",
+            Title = "Select Boss To Snipe",
+            Multi = true, 
+            Table = AllBoss[tostring(game.PlaceId)],
+            Default = getgenv().Setting.BossSniper.SelectedBoss or {},
+            OnChange = function(state)
+                local Values = {}
+                for Value, State in pairs(state) do
+                    if  type(Value) == "string" then
+                        table.insert(Values, Value)
+                    end
+                end 
+                
+
+                getgenv().Setting.BossSniper.SelectedBoss = Values
+                SettingManager:Save()
+            end
+        },     
+        {Mode="Toggle",Title="Start Boss Snipe",Description="",Args={"BossSniper","Enable"}},
+        {Mode="Toggle",Title="Auto Bartilo Quest",Description="Sea 2 Function",Args = {"Bartilo","Enable"}},
+        {Mode="Toggle",Title="Auto Race Evolve",Description="Sea 2 Function, Need Bartilo Quest Finish",Args = {"Race Evolve","Enable"}},
+        {Mode="Toggle",Title="Auto Factory",Description="Sea 2 Function Only",Args = {"Factory","Enable"}},
+        {Mode="Toggle",Title="Auto Spawn Black Beard",Description="Sea 2 Function Only", Args = {"Spawn Black Beard","Enable"}},
+        {Mode="Toggle",Title="Auto Black Beard",Description="Sea 2 Function Only", Args = {"Black Beard","Enable"}},
+        {Mode="Toggle",Title="Auto Ghoul",Description="Travel To Sea2 and Stack Farming Until Have Ghoul", Args = {"Get Ghoul","Enable"}},
+        {Mode="Toggle",Title="Auto Soul Guitar",Args = {"Soul Guitar","Enable"}},
+        {Mode="Toggle",Title="Auto Soul Guitar Material",Args = {"Material Soul Guitar","Enable"}},
+        {Mode="Toggle",Title="Auto CDK (DO NOT USE TESTING)",Args = {"CDK","Enable"}},
+        
+        --{Mode="Toggle",Title="Auto Collect Gift", Description="Sea 3 Function Event",Args = {"Winter Event","Enable"}}
+    },
+    ["Sub Farming"] = {
+        {Mode="Label",Title="Disable All Stack + Main Farm Before Using"},
+        {Mode="Button",Title="Upgrade Yoru V2",Description="Only useable if you have yoru",Callback=function()
+            IslandCaller("YoruV2")
+        end},
+        {Mode="Toggle",Title="Yoru V3",Description="Auto Upgrade Yoru V3",Args = {"YoruV3","Enable"}},
+        {Mode="Dropdown",Title="Select Player",Description="Select Account to upgrade together",Table=IslandCaller("__StrGetPlayers"),OnChange=function (state)
+            getgenv().Setting["YoruV3"].SelectedPlayer = state
+        end},
+        {Mode="Button",Title="Refresh Players",Callback=function()
+            ElementsCollection["Sub Farming"]["Select Player"]:SetValues(IslandCaller("__StrGetPlayers"))
+        end},
+        {Mode="Toggle",Title="Account To Upgrade Yoru V3",Description="Turn On This If This Is Account Want to Upgrade, do not if account to spawn Black Beard",Args = {"YoruV3","Upgrade"}},
+        {Mode="Toggle",Title="Race Evolve Hop",Description="Turning On This Will Make Race Evolve Hopping For Faster Farming",Args = {"Race Evolve","Hop"}},
+        {Mode="Toggle",Title="Black Beard Hop",Description="Auto Hop For Black Beard",Args={"Black Beard Hop","Enable"}},
+        {Mode="Toggle",Title="Tushita Hop (Need All Haki Colors)",Description="Auto Chest + Auto Elite Till Find Cup And Spawn Then Get Tushita",Args={"Tushita Hop__1","Enable"}},
+        {Mode="Toggle",Title="Hybrid Fruit Hop",Description="Pirate Raid + Collect Fruit Hop",Args={"Hybrid Fruit Hop","Enable"}},
+        {Mode="Toggle",Title="Raid Fruit Hop",Description="Pirate Raid + Collect Fruit + Raid Hop" ,Args={"Raid Fruit Hop","Enable"}},
+        {Mode="Toggle",Title="Auto Law",Description="Auto Farm Law",Args={"Law","Enable"}},
+        {Mode="Toggle",Title="Auto Cyborg",Description="Auto Chest For Fist Then Auto Law",Args={"Fully Cyborg","Enable"}},
+        {Mode="Toggle",Title="Auto Ghoul Hop",Description="Auto Find Torch + Ghoul (Very Rare, Dont Recommend)",Args={"Fully Ghoul","Enable"}},
+        {Mode="Toggle",Title="Boss Snipe Hop",Description="",Args={"BossSniper","Hop"}},
+        {Mode="Label",Title="Chest Count"},
+        {Mode="Toggle",Title="Auto Chest",Description="Stop On God Chalice And Fist Of Darkness By Default",Args={"Collect Chest","Enable"}},
+        {Mode="Toggle",Title="Auto Chest Hop",Description="Hop After x Chest",Args = {"Collect Chest","Hop"}},
+        {
+            Mode = "Dropdown",
+            Title = "x Chest To Hop",
+            Args = {"Collect Chest", "LimitChest"},
+            Table = {20,25,30,35,40,45,50,60,70},
+            Default = (function ()
+                local Default = {20,25,30,35,40,45,50,60,70}
+                local Found = 9
+                if not table.find(Default,getgenv().Setting["Collect Chest"].LimitChest) then 
+                    getgenv().Setting["Collect Chest"].LimitChest = 70
+                else
+                    Found = table.find(Default,getgenv().Setting["Collect Chest"].LimitChest) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting["Collect Chest"].LimitChest = tonumber(value)
+                SettingManager:Save()
+            end
+        },        
+
+        {Mode="Toggle",Title="Insta Tp Chest",Description="Have A Risk Of Getting Banned(Noone yet)",Args={"Collect Chest","InstaTP"}},
+        {Mode="Toggle",Title="Auto Level Observation",Description="Farm Observation Level Till Max",Args={"Level Observation","Enable"}},
+        {Mode="Toggle",Title="Level Observation Hop",Description="Hopping For leveling Observation",Args={"Level Observation","Hop"}},
+        {Mode="Toggle",Title="Auto Observation V2",Description="Must Have Maxed Ken Haki + Finish Citizen Quest",Args = {"Evolve Observation","Enable"}},
+        {Mode="Toggle",Title="Observation V2 Hop",Description="Hopping For Finding Materials To Get Evolve Faster",Args = {"Evolve Observation","Hop"}},
+        {Mode="Toggle",Title="Auto Saber Hop",Args={"__SaberHop","Enable"}},
+        {Mode="Toggle",Title="Auto Pole Hop",Args={"__PoleHop","Enable"}},
+        {Mode="Toggle",Title="Auto Citizen Quest",Description="Must Be Level 1800 Above",Args = {"Citizen Quest","Enable"}},
+        {Mode="Toggle",Title="Citizen Quest Hop",Description="",Args = {"Citizen Quest","Hop"}},
+        {Mode="Toggle",Title="Auto Get Rainbow Haki",Description="",Args = {"Rainbow Haki","Enable"}},
+        {Mode="Toggle",Title="Rainbow Haki Hop",Description="Hopping For Fast Getting Rainbow Haki",Args = {"Rainbow Haki","Hop"}},
+    },
+    ["Status"] = {
+        {Mode="Label",Title="Client Time"},
+        {Mode="Label",Title="Farming Status"},
+        {Mode="Label",Title="Weapon Status [One Click]"},
+        {Mode="Label",Title="Dimension Kill"},
+        {Mode="Label",Title="Bribe Status"},
+        {Mode="Label",Title="Elite Status"},
+        {Mode="Label",Title="Mirage Status"},
+        {Mode="Label",Title="Kitsune Status"},
+        {Mode="Label",Title="FullMoon Status"},
+    },
+    ["Player-Status"] = {
+        {Mode="Label",Title="W.I.P"}
+    },
+    ["Fruit"] = {
+        {
+            Mode = "Toggle",
+            Title = "Auto Collect Fruit",
+            Description = "Stackable With Auto Farm",
+            Args = {"GetFruit", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.GetFruit.Enable = state
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Store Fruit",
+            Args = {"Fruit", "AutoStore"},
+            OnChange = function(state)
+                getgenv().Setting.Fruit.AutoStore = state
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Snipe Fruit",
+            Args = {"Fruit", "EnableSnipeFruit"},
+            Description = "Auto Buy Fruit If In The List And You Dont Have Fruit In That List",
+            OnChange = function(state)
+                getgenv().Setting.Fruit.EnableSnipeFruit = state
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Snipe Mirage Fruit [Premium]",
+            Description = "Stackable with Auto Farm, Snipe If In Mirage Fruit Stock And Mirage Dealer Appear",
+            Args = {"Mirage Snipe Fruit", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting["Mirage Snipe Fruit"].Enable = state
+            end
+            
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Select Fruit To Snipe",
+            Multi = true, 
+            Table = FruitTable,
+            Default = getgenv().Setting.Fruit.FruitsToSnipe or {},
+            OnChange = function(state)
+                local Values = {}
+                for Value, State in pairs(state) do
+                    if  type(Value) == "string" then
+                        table.insert(Values, Value)
+                    end
+                end 
+                
+
+                getgenv().Setting.Fruit.FruitsToSnipe = Values
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Local Player"] = {
+        --[[{
+            Mode = "Button",
+            Title = "Kick Player Safe Zone",
+            Description = "Near Safe Zone + Need To Shit On Ship",
+            Callback = KickPlayer
+        },
+        {
+            Mode = "Button",
+            Title = "Buy Ship",
+            Description = "",
+            Callback = function()
+=
+            end
+        },
+
+        {
+            Mode = "Button",
+            Title = "Fly",
+            Description = "",
+            Callback = function()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Stop Fly",
+            Description = "",
+            Callback = function()
+            end
+        },]]
+        {
+            Mode = "Button",
+            Title = "Remove Enemies Skill Stun",
+            Callback = function()
+                IslandCaller("RemoveEnemiesStun")
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Clip",
+            Args = {"LocalPlayer", "NoClip"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.NoClip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Clip Ship",
+            Args = {"LocalPlayer", "NoClipShip"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.NoClipShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Buso",
+            Args = {"LocalPlayer", "AutoBuso"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoBuso = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Enable Observation",
+            Args = {"LocalPlayer", "AutoEnableObservation"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoEnableObservation = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Water Walker",
+            Args = {"LocalPlayer", "WaterWalker"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.WaterWalker = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Use Race V3",
+            Args = {"LocalPlayer", "AutoUseV3"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoUseV3 = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Use Race V4",
+            Args = {"LocalPlayer", "AutoUseV4"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoUseV4 = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Soru No CD",
+            Args = {"LocalPlayer", "SoruNoCD"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.SoruNoCD = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Dash Modify",
+            Args = {"LocalPlayer", "DashModify"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.DashModify = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Dash No CD",
+            Args = {"LocalPlayer", "DashNoCD"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.DashNoCD = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Change Dash Rage",
+            Args = {"LocalPlayer", "DoDashRange"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.DoDashRange = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Dash Range",
+            Args = {"LocalPlayer", "DashRange"},
+            Table = {100,150,200,250,300,500,750,1000},
+            Default = (function ()
+                local Default = {100,150,200,250,300,500,750,1000}
+                local Found = 3
+                if not table.find(Default,getgenv().Setting.LocalPlayer.DashRange) then 
+                    getgenv().Setting.LocalPlayer.DashRange = 200 
+                else
+                    Found = table.find(Default,getgenv().Setting.LocalPlayer.DashRange) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.LocalPlayer.DashRange = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Infinity Geppo",
+            Args = {"LocalPlayer", "InfGeppo"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.InfGeppo = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Speed Hack",
+            Args = {"LocalPlayer", "SpeedHack"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.SpeedHack = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Speed",
+            Args = {"LocalPlayer", "Speed"},
+            Default = getgenv().Setting.LocalPlayer.Speed,
+            Min = 16,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.LocalPlayer.Speed = value
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Travel"] = {
+        {Mode="Button",Title="Stop Tween",Callback=function() IslandCaller("StopTween") end},
+        {Mode="Button",Title="Travel Sea 1",Callback=function ()
+            IslandCaller("Travel","Sea1")
+        end},
+        {Mode="Button",Title="Travel Sea 2",Callback=function ()
+            IslandCaller("Travel","Sea2")
+        end},
+        {Mode="Button",Title="Travel Sea 3",Callback=function ()
+            IslandCaller("Travel","Sea3")
+        end},
+        {Mode="Dropdown",Title="Insta Tp Place",Table=(function ()
+            local Tbl = {}
+            for i,v in pairs(getgenv().IslandVariable.GatePos) do
+                table.insert(Tbl,i)
+            end
+            return Tbl
+        end)(),OnChange=function (state)
+            if type(state) == "string" and getgenv().IslandVariable.GatePos[state] then
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",getgenv().IslandVariable.GatePos[state])
+            end
+        end},
+        {Mode="Dropdown",Title="Travel Place",Table=getgenv().IslandVariable.__Places,OnChange=function (state)
+            getgenv().IslandVariable.SelectedPlace = state
+        end},
+        {Mode="Button",Title="Start Traveling",Callback=function ()
+            IslandCaller("TweenSelectedPlace")
+        end},
+    },
+    ["Pvp-Visual"] = {
+        {Mode="Dropdown",Title="Select Player",Table=IslandCaller("__StrGetPlayers"),OnChange=function (state)
+            SelectedPlayer = state
+        end},
+        {Mode="Button",Title="Refresh Players",Callback=function()
+            ElementsCollection["Pvp-Visual"]["Select Player"]:SetValues(IslandCaller("__StrGetPlayers"))
+        end},
+        {
+            Mode = "Toggle",
+            Title = "Tween To Player",
+            Args = {"TweenToPlayer"},
+            OnChange = function(state)
+                getgenv().Setting.TweenToPlayer = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Shoot Gun(100%)",
+            Args = {"Pvp", "AutoShootGun"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.AutoShootGun = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Silent Aim Near Player",
+            Args = {"Pvp", "SilentAimNear"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.SilentAimNear = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Kill Near Player [Premium]",
+            Description = "Use Very Fast Attack",
+            Args = {"Pvp", "AutoKillNear"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.AutoKillNear = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Only Shoot In Shootable Distance",
+            Args = {"Pvp", "GunDistanceCheck"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.GunDistanceCheck = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Players",
+            Args = {"ESP", "Player"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Player = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Boss",
+            Args = {"ESP", "Boss"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Boss = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Chests",
+            Args = {"ESP", "Chest"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Chest = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Island",
+            Args = {"ESP", "Island"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Island = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Fruit",
+            Args = {"ESP", "Fruit"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Fruit = state
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Raid-Material"] = {
+        {
+            Mode = "Label",
+            Title = "Selected Material",
+        },
+        {
+            Mode = "Toggle",
+            Title = "Start Farming Material",
+            Args = {"Material","Enable"},
+            Callback = function (state)
+                getgenv().Setting.Material.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {Mode="Dropdown",Title="Materials",Table=getgenv().IslandVariable.MaterialName,OnChange=function (state)
+            getgenv().Setting.Material.Select = state
+            SettingManager:Save()        
+        end},
+        {
+            Mode = "Label",
+            Title = "Selected Chip",
+            Content = getgenv().Setting.Raid.Select or ""
+        },
+        {Mode="Dropdown",Title="Select",Table={"Flame","Ice","Sand","Quake","Light","Dark","String","Rumble","Magma","Human: Buddha","Bird: Phoenix","Dough"},OnChange=function (state)
+            getgenv().Setting.Raid.Select = state
+            SettingManager:Save()        
+        end}, --Todo: Get Chips Data From Game
+        {
+            Mode = "Toggle",
+            Title = "Enable Raid",
+            Description = "Must Turn On This In Order To Raiding Works",
+            Args = {"Raid", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Select Current Fruit Chip",
+            Callback = function()
+                getgenv().Setting.Raid.Select = getgenv().IslandVariable.AutoChip[LP.Data.DevilFruit.Value] or ""
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Delay Next Island",
+            Description = "May Get Reseted if You Turn Off This",
+            Args = {"Raid", "NoDelay"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.NoDelay = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Awaken",
+            Args = {"Raid", "Awaken"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.Awaken = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Unstore Fruit Under 1M",
+            Args = {"Raid", "GetFruitUnder1M"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.GetFruitUnder1M = state
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Sea Events"] = {
+        {
+            Mode = "Button",
+            Title = "Tp Your Ship To Current Pos",
+            Callback = function()
+                IslandCaller("TPCurrentShip")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Remove Sea Terror Effect",
+            Callback = function()
+                if game.Lighting:FindFirstChild("SeaTerrorCC") then
+                    game.Lighting.SeaTerrorCC:Destroy()
+                end
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Night Atmosphere",
+            Callback = function()
+                IslandCaller("NightAtmosphere")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Dark Atmosphere",
+            Callback = function()
+                IslandCaller("DarkAtmosphere")
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Ship Speed Modifier",
+            Args = {"SeaEvents", "ShipSpeedModifier"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.ShipSpeedModifier = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Ship Speed",
+            Args = {"SeaEvents", "ShipSpeed"},
+            Default = getgenv().Setting.SeaEvents.ShipSpeed,
+            Min = 200,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.ShipSpeed = value
+                SettingManager:Save()
+            end
+        },
+        {Mode="Dropdown",
+        Title="Select Ship",
+        Table={"PirateSloop","Swan Ship","Beast Hunter","PirateGrandBrigade","MarineGrandBrigade","PirateBrigade","MarineBrigade"},
+        Default = getgenv().Setting.SeaEvents.SelectShip 
+        and table.find({"PirateSloop","SwanShip","Beast Hunter","PirateGrandBrigade","MarineGrandBrigade","PirateBrigade","MarineBrigade"},getgenv().Setting.SeaEvents.SelectShip) or 1,
+        OnChange=function (state)
+            getgenv().Setting.SeaEvents.SelectShip = state
+            SettingManager:Save()        
+        end},
+        {
+            Mode = "Toggle",
+            Title = "Start Farming Sea Event",
+            Description = "For Farming Sharks, Piranha, Terror Shark, SeaBeast, Ship",
+            Args = {"SeaEvents", "StartSeaEvents"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.StartSeaEvents = state
+                SettingManager:Save()
+            end
+        },
+       --[[ {
+            Mode = "Toggle",
+            Title = "Auto Spawn Ship",
+            Description = "For Farming Sharks, Piranha, Terror Shark",
+            Args = {"SeaEvents", "AutoBuyShip"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoBuyShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Tp Ship To Zone 6",
+            Description = "Insta TP Ship, Must Not Have Any Players In Ship Or Errors",
+            Args = {"SeaEvents", "AutoTpShip"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoTpShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Sit",
+            Description = "Auto Sit At Your Ship",
+            Args = {"SeaEvents", "AutoSit"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoSit = state
+                SettingManager:Save()
+            end
+        },]]
+        {
+            Mode = "Toggle",
+            Title = "Auto Terror Shark",
+            Description = "Farm Terror Shark",
+            Args = {"SeaEvents", "TerrorShark"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.TerrorShark = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Sea Beasts",
+            Description = "Farm Sea Beasts",
+            Args = {"SeaEvents", "SeaBeast"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.SeaBeast = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Ship",
+            Description = "Farm Ship",
+            Args = {"SeaEvents", "Ship"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Ship = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Ignore Sea Beast",
+            Description = "Fly To Ignore Sea Beast, Must Turn On Auto Sea beast",
+            Args = {"SeaEvents", "IgnoreSeaBeast"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.IgnoreSeaBeast = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Ignore Ship",
+            Description = "TP Ship Back So Ship Despawn, Must Turn On Auto Ship",
+            Args = {"SeaEvents", "IgnoreShip"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.IgnoreShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Shark",
+            Description = "Farm Sharks",
+            Args = {"SeaEvents", "Shark"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Shark = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Piranha",
+            Description = "Farm Piranha",
+            Args = {"SeaEvents", "Piranha"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Piranha = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Safe Mode",
+            Args = {"SeaEvents", "SafeMode"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.SafeMode = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Escape Rough Sea",
+            Args = {"SeaEvents", "AutoEscapeRoughSea"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoEscapeRoughSea = state
+                SettingManager:Save()
+            end
+        },
+        --[[{
+            Mode = "Toggle",
+            Title = "Only Farm Near",
+            Description = "Only Farm Near Mobs So You Dont Have To Deal With Far Mobs That Aren't From Yours",
+            Args = {"SeaEvents", "OnlyFarmNearMob"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.OnlyFarmNearMob = state
+                SettingManager:Save()
+            end
+        },]]
+        {
+            Mode = "Label",
+            Title = "Leviathan Section"
+        },
+        --{
+         --   Mode = "Button",
+           -- Title = "Tween Ship To Tiki",
+        --    Description = "For Transporting Heart",
+        --},
+        {
+            Mode = "Button",
+            Title = "Tp To Frozen island",
+            Description = "It Must Spawn First",
+            Callback = function()
+                IslandCaller("TPLeviathanIsland")
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Find Leviathan",
+            Description = "Leviathan",
+            Args = {"SeaEvents", "AutoFindLeviathan"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoFindLeviathan = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Leviathan",
+            Description = "Leviathan",
+            Args = {"SeaEvents", "Leviathan"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Leviathan = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Multi Segments Attack",
+            Description = "More",
+            Args = {"SeaEvents", "MultiSegmentAttack"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.MultiSegmentAttack = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Kitsune Section"
+        },
+        {
+            Mode = "Button",
+            Title = "Tween To Kitsune Island",
+            Description = "",
+            Callback = function()
+
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Find Kitsune Island",
+            Description = "Wait For Near Full Moon Then Enable This",
+            Args = {"SeaEvents", "AutoFindKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoFindKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Start Kitsune When In Island",
+            Args = {"SeaEvents", "AutoStartKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoStartKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Collect Azure Wisp",
+            Args = {"SeaEvents", "AutoCollectKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoCollectKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Azure Trade Min",
+            Args = {"SeaEvents", "AzureEmberLimit"},
+            Table = {15,20,25,30},
+            Default = (function ()
+                local Default = {15,20,25,30}
+                local Found = 3
+                if not table.find(Default,getgenv().Setting.SeaEvents.AzureEmberLimit) then 
+                    getgenv().Setting.SeaEvents.AzureEmberLimit = 25
+                else
+                    Found = table.find(Default,getgenv().Setting.SeaEvents.AzureEmberLimit) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.AzureEmberLimit = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Trade Azure Wisp",
+            Args = {"SeaEvents", "AutoTradeKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoTradeKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Sea Events Setting"
+        },
+        --[[
+        {
+            Mode = "Toggle",
+            Title = "Spin Ship If In Farming",
+            Description = "Safe Mode Ship",
+            Args = {"SeaEvents", "SpinShipAttack"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.SpinShipAttack = state
+                SettingManager:Save()
+            end
+        },]]
+        {
+            Mode = "Toggle",
+            Title = "Spin Ship If Farming",
+            Description = "Safe Mode Ship",
+            Args = {"SeaEvents", "FlyShipFarm"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.FlyShipFarm = state
+                SettingManager:Save()
+            end
+        },
+       -- {
+        --    Mode = "Toggle",
+        --    Title = "Spin Ship If Idle",
+        --    Description = "Safe Mode Ship",
+        --    Args = {"SeaEvents", "SpinShipIdle"},
+        --    OnChange = function(state)
+        --        getgenv().Setting.SeaEvents.SpinShipIdle = state
+        --        SettingManager:Save()
+        --    end
+        --},
+        {
+            Mode = "Slider",
+            Title = "Spin Distance",
+            Args = {"SeaEvents", "SpinDistance"},
+            Default = getgenv().Setting.SeaEvents.SpinDistance,
+            Min = 10,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.SpinDistance = value
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Near Distance",
+            Args = {"SeaEvents", "DistanceNearMob"},
+            Default = getgenv().Setting.SeaEvents.DistanceNearMob or 300,
+            Min = 300,
+            Max = 1000,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.DistanceNearMob = value
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Sea Beast Near Distance",
+            Args = {"SeaEvents", "DistanceNearSeaBeast"},
+            Default = getgenv().Setting.SeaEvents.DistanceNearSeaBeast or 300,
+            Min = 300,
+            Max = 2000,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.DistanceNearSeaBeast = value
+                SettingManager:Save()
+            end
+        }
+    
+    },
+    ["RaceV4-Mirage"] = {
+        {
+            Mode = "Button",
+            Title = "TP To Gear",
+            Callback = function()
+                IslandCaller("TweenGear")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP To Advandced Fruit Dealer",
+            Callback = function()
+                IslandCaller("TweenFruitDealer")
+            end
+            
+        },
+        {
+            Mode = "Button",
+            Title = "Tween To Highest Place Mirage",
+            Callback = function()
+                pcall(function()
+                    IslandCaller("TweenHighestPlace")
+                end)
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Fully Auto Unlock Race v4 Entrance",
+            Args = {"FullyRaceV4_Entrance", "Enable"},
+        },
+        {
+            Mode = "Label",
+            Title = "Trial Status",
+        },
+        {
+            Mode = "Toggle",
+            Title = "Check Status + Upgrade Race V4",
+            Args = {"RaceV4", "CheckStatus"},
+            OnChange = function(state)
+                getgenv().Setting.RaceV4.CheckStatus = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Start Trial With Team",
+            Args = {"TrialTeam", "Enable"},
+        },
+        {Mode="Dropdown",Title="Team Trial Player 1",Table=IslandCaller("__StrGetPlayers"),Default=getgenv().Setting["TrialTeam"].TrialPlayer1,OnChange=function (state)
+            getgenv().Setting["TrialTeam"].TrialPlayer1 = state
+            SettingManager:Save()
+        end},
+        {Mode="Dropdown",Title="Team Trial Player 2",Table=IslandCaller("__StrGetPlayers"),Default=getgenv().Setting["TrialTeam"].TrialPlayer2,OnChange=function (state)
+            getgenv().Setting["TrialTeam"].TrialPlayer2 = state
+            SettingManager:Save()
+        end},
+        {Mode="Button",Title="Refresh Players",Callback=function()
+            ElementsCollection["RaceV4-Mirage"]["Team Trial Player 1"]:SetValues(IslandCaller("__StrGetPlayers"))
+            ElementsCollection["RaceV4-Mirage"]["Team Trial Player 2"]:SetValues(IslandCaller("__StrGetPlayers"))
+        end},
+        {
+            Mode = "Toggle",
+            Title = "Fully Auto Finish Trial [Premium]",
+            Description = "Train, Auto Kill After Trial, Auto Activate Race",
+            Args = {"FullyAutoTrial", "Enable"},
+            OnChange = function(state)
+                if IsPremium then
+                    getgenv().Setting.FullyAutoTrial.Enable = state
+                end
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Train",
+            Args = {"AutoTrainTrial", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.AutoTrainTrial.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Finish Trial",
+            Args = {"Trial", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Choose Gear",
+            Args = {"Trial", "ChooseGear"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.ChooseGear = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Kill After Trial [Premium]",
+            Args = {"Trial", "AutoKill"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.AutoKill = state
+                SettingManager:Save()
+            end
+        },
+
+        {
+            Mode = "Toggle",
+            Title = "Auto Look Moon",
+            Args = {"Trial", "LookAtMoon"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.LookAtMoon = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP To Temple Of Time",
+            Callback = function()
+                IslandCaller("TPTempleOfTime")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP To Acient Clock",
+            Callback = function()
+                IslandCaller("TPAcientClock")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP Current Race Entrance",
+            Callback = function()
+                IslandCaller("TPCurrentEntrance")
+            end
+        },
+    },
+    ["Shop"] = {
+        {
+            Mode = "Toggle",
+            Title = "Auto Buy Bribe",
+            Args = {"Shop", "AutoBuyBribe"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoBuyBribe = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Random Bone",
+            Args = {"Shop", "AutoRandomBone"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoRandomBone = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Random Fruit",
+            Args = {"Shop", "AutoRandomFruit"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoRandomFruit = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Buy Legendary Sword",
+            Args = {"Shop", "AutoLegendarySword"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoLegendarySword = state
+                SettingManager:Save()
+            end
+        },
+
+        {
+            Mode = "Toggle",
+            Title = "Auto Buy Haki Color",
+            Args = {"Shop", "HakiColor"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.HakiColor = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Only Buy Legendary Haki Color",
+            Args = {"Shop", "LegendaryHakiColor"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.LegendaryHakiColor = state
+                SettingManager:Save()
+            end
+        },
+        
+       --[[ {
+            Mode = "Toggle",
+            Title = "Auto Trade X2 Exp (Candy)",
+            Args = {"Shop", "Candy X2 EXP"},
+            OnChange = function(state)
+                getgenv().Setting.Shop["Candy X2 EXP"] = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Trade 500 Fragments (Candy)",
+            Args = {"Shop", "Candy 500 Fragments"},
+            OnChange = function(state)
+                getgenv().Setting.Shop["Candy 500 Fragments"] = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Stats Refund( Candy)",
+            Description = "75 Candy",
+            Callback = function()
+                local args = {
+                    [1] = "Candies",
+                    [2] = "Buy",
+                    [3] = 1,
+                    [4] = 2
+                }
+                
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer(unpack(args))            
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Reroll Race( Candy)",
+            Description = "100 Candy",
+            Callback = function()
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("Candies","Buy",1,3)         
+            end
+
+            
+        },]]
+        {
+            Mode = "Button",
+            Title = "Stats Refund",
+            Description = "2500 Fragment",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BlackbeardReward", "Refund", "2")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Reroll Race",
+            Description = "3000 Fragment",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BlackbeardReward", "Reroll", "2")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Race To Ghoul",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Ectoplasm", "Change", 4)
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Race To Cyborg",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("CyborgTrainer", "Buy")
+            end
+        }
+    },
+    ["Setting"] = {
+        {
+            Mode = "Label",
+            Title = "Tween Section"
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Tween Speed",
+            Args = {"Tween", "Speed"},
+            Table = {250,275,300,325,350},
+            Default = (function ()
+                local Default = {250,275,300,325,350}
+                local Found = 1
+                if not table.find(Default,getgenv().Setting.Tween.Speed) then 
+                    getgenv().Setting.Tween.Speed = 250 
+                else
+                    Found = table.find(Default,getgenv().Setting.Tween.Speed) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.Tween.Speed = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Tween Pause",
+            Description = "Prevent Security Kick",
+            Args = {"Tween", "Pause"},
+            OnChange = function(state)
+                getgenv().Setting.Tween.Pause = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Bring Mob Section"
+        },
+        {
+            Mode = "Toggle",
+            Title = "Bring Mob",
+            Description = "Not Recommended May Error But Works If in PS",
+            Args = {"BringMob", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.BringMob.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Bring Mob Radius",
+            Args = {"BringMob", "Radius"},
+            Default = getgenv().Setting.BringMob.Radius or 200,
+            Min = 200,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.BringMob.Radius = value
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Fast Attack Section"
+        },
+        {
+            Mode = "Toggle",
+            Title = "Stop Clicking",
+            Args = {"FastAttack", "StopClick"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.StopClick = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Fast Attack",
+            Args = {"FastAttack", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Very Fast Attack",
+            Description = " Dont Use, Just Change Fast Attack % Time to 100%",
+            Args = {"FastAttack", "SupremeAttack"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.SupremeAttack = state
+                SettingManager:Save()
+            end
+        },
+       {
+            Mode = "Toggle",
+            Title = "Old Fast Attack",
+            Description = "Use Less For Now",
+            Args = {"FastAttack", "OldFastAttack"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.OldFastAttack = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "On Player",
+            Description = "Fast Attack On Player",
+            Args = {"FastAttack", "OnPlayer"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.OnPlayer = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "On Mob",
+            Description = "Fast Attack On Mob",
+            Args = {"FastAttack", "OnMob"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.OnMob = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Fast Attack %Time",
+            Args = {"FastAttack", "TimeFastAttack"},
+            Table = {10,25,50,75,100},
+            Default = (function ()
+                local Default = {10,25,50,75,100}
+                local Found = 5
+                if not table.find(Default,getgenv().Setting.FastAttack.TimeFastAttack) then 
+                    getgenv().Setting.FastAttack.TimeFastAttack = 100
+                else
+                    Found = table.find(Default,getgenv().Setting.FastAttack.TimeFastAttack) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.FastAttack.TimeFastAttack = tonumber(value)
+                SettingManager:Save()
+            end
+        }, 
+        {
+            Mode = "Slider",
+            Title = "Attack Time",
+            Args = {"FastAttack", "TimeToAttack"},
+            Default = getgenv().Setting.FastAttack.TimeToAttack,
+            Min = 3,
+            Max = 10,
+            Rounding = 1,
+            OnChange = function(value)
+                getgenv().Setting.FastAttack.TimeToAttack = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Mastery Position",
+            Args = {"FastAttack", "TimeToAttack"},
+
+        },
+        function ()
+            local MultiBuild = {}
+            local Pos = {"X","Y","Z"}
+            for i,v in pairs(Pos) do
+                table.insert(
+                    MultiBuild,
+                    {
+                        Mode = "Slider",
+                        Title = "Position "..v,
+                        Args = {"Mastery", v},
+                        Default = getgenv().Setting.Mastery[v] or ( (v == "Y") and  30 or 0),
+                        Min = 0,
+                        Max = 60,
+                        OnChange = function(value)
+                            getgenv().Setting.Mastery[v] = value
+                            SettingManager:Save()
+                        end
+                    } 
+                )
+            end
+            return MultiBuild
+        end,
+        {
+            Mode = "Dropdown",
+            Title = "Weapon For Sea Events",
+            Multi = true, 
+            Table = {"Melee","Blox Fruit","Sword","Gun"},
+            Default = (function ()
+                local Default = {}
+                for i,v in pairs(getgenv().Setting.SkillsSet2) do
+                    if type(i) == "string" then
+                        table.insert(Default,i)
+                    end
+                end
+                return Default
+            end)(),
+            OnChange = function(ReturnTable)
+                local ProxyTable = {}
+                for Value, State in pairs(ReturnTable) do
+                    if type(Value) == "string" then
+                        ProxyTable[Value]=State
+                    end
+                end
+                getgenv().Setting.SkillsSet2 = ProxyTable
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Fruit Skills Setting"
+        },
+        {
+            Mode = "Toggle",
+            Title = "Click For fruit",
+            Description = "For Kitsune, Mammoth, Light, Ice, ...",
+            Args = {"SkillsSettingRemake","ClickFruit"},
+            OnChange = function(state)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Skills For fruit",
+            Multi = true, 
+            Table = {"Z","X","C","V","F"},
+            Default = getgenv().Setting.SkillsSettingRemake["Blox Fruit"],
+            OnChange = function(state)
+                local Values = {}
+                for Value, State in pairs(state) do
+                    if  type(Value) == "string" then
+                        table.insert(Values, Value)
+                    end
+                end 
+                
+
+                getgenv().Setting.SkillsSettingRemake["Blox Fruit"] = Values
+                SettingManager:Save()
+            end
+        }
+
+    },
+    ["Webhook"] = {
+        {
+            Mode = "TextBox",
+            Title = "Webhook",
+            Default = getgenv().Setting.Webhook.Url,
+            Callback = function(arg)
+                getgenv().Setting.Webhook.Url = arg
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Test Webhook",
+            Callback = function()
+                getgenv().WebhookCenter.SimpleSend("Testing","Success")
+            end
+        },
+    },
+    ["Game-Server"] = {
+        {
+            Mode = "Button",
+            Title = "Copy Job Id",
+            Callback = function ()
+                setclipboard(tostring(game.JobId))
+            end
+        },
+        {
+            Mode = "TextBox",
+            Title = "Server Code [Premium]",
+            Callback = function(arg)
+                getgenv().PreServerCode = arg
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Join Server Code",
+            Args = {"Misc","__PreJoin"},
+            OnChange = function(state)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Clear Server Code",
+            Callback = function(arg)
+                local _, err = pcall(function ()
+                    ElementsCollection["Game-Server"]["Server Code [Premium]"]:SetValue("")
+                end)
+                if err then
+                    print(err)
+                end
+            end
+        },
+        {
+            Mode = "TextBox",
+            Title = "Job id",
+            Callback = function(arg)
+                pcall(function ()
+                    local a = arg
+                    if a ~= "" then
+                        game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer("teleport", a)     
+                    end
+                end)
+
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Fog",
+            Description = "For Better Vision",
+            Args = {"Misc", "__NoFog"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__NoFog = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Remove Effect (Fluxus Only)",
+            Description = "Disable And Rejoin To Get The Effect Back If You Want Effects",
+            Args = {"Misc", "__RemoveEffects"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__RemoveEffects = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable 3D Render",
+            Args = {"Misc", "DisableRender3D"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.DisableRender3D = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable Notifications",
+            Args = {"Misc", "__RemoveNotification"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__RemoveNotification = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable DMG Counter",
+            Args = {"Misc", "__RemoveDMGCounter"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__RemoveDMGCounter = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Server Hop",
+            Callback = function ()
+                IslandCaller("TrueServerHop")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Low Player Server Hop",
+            Callback = function ()
+                IslandCaller("TrueServerHop",1,3)
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Rejoin",
+            Callback = function ()
+                game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer("teleport",game.JobId)
+            end
+        },
+    },
+    ["One Click"] = {
+        {
+            Mode = "Toggle",
+            Title = "Start One Click",
+            Description = "Do Not Farm Levels Too Fast Or Enjoy Getting Reseted",
+            Args = {"OneClick", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Remove limit 1 Minute Get Quest",
+            Description = "Turn This On = Farm Faster But May Get Reseted",
+            Args = {"OneClick", "UnlimitGetQuest"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.UnlimitGetQuest = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Triple Quests",
+            Description = "Only use this if you only farm for a while or get reseted",
+            Args = {"OneClick", "TripleQuest"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.TripleQuest = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Add Stats",
+            Description = "Melee -> Health, The Last One You Chose",
+            Args = {"OneClick", "AutoAddStats"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.AutoAddStats = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable Melees Switcher",
+            Description = "Melees Switcher Is For God Human, Turn Off If You Only Want To Farm A Melee",
+            Args = {"OneClick", "DisableMeleeSwitcher"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.DisableMeleeSwitcher = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Farms All Melee 600 Mastery",
+            Description = "Melee -> Health, The Last One You Chose",
+            Args = {"OneClick", "Melee600Mastery"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.Melee600Mastery = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Hop For Library Key / Water Key",
+            Description = "",
+            Args = {"OneClick", "Sea2KeyHop"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.Sea2KeyHop = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Redeem All Codes",
+            Callback = function()
+                IslandCaller("RedeemAllCode")
+
+            end
+        }
+    }
+}
+print("Adding Shop Items")
+for _,v in pairs(getgenv().IslandVariable.Items) do 
+    for i,t in pairs(v) do
+        table.insert(UiIntilize["Shop"],{
+            Mode = "Label",
+            Title = i .. " Section",
+        })
+        local AllMelees = {}
+        local Caller ={}
+        for _,v2 in pairs(t) do
+            table.insert(AllMelees,v2.Name)
+            Caller[v2.Name]=v2.Args
+        end
+        table.insert(UiIntilize["Shop"],{Mode="Dropdown",Title=i,Table=AllMelees,OnChange=function (state)
+            if Caller[state] then
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(table.unpack(Caller[state]))
+            end
+        end})
+    end
+end
+print("Building Ui")
+
+local BuildUI = function (Tab,i,v,Name)
+
+    if v.Mode == "Toggle" then
+        local pointer = getgenv().Setting
+        local args = v.Args
+        for i = 1, #args - 1 do
+            pointer = pointer[args[i]]
+        end
+        local BuildToggle = {}
+        BuildToggle.Title = v.Title
+        BuildToggle.Default = pointer[args[#args]]
+        if v.Description then
+            BuildToggle.Description  = v.Description
+        end
+        ElementsCollection[Name][v.Title] =  Tab:AddToggle(v.Title, BuildToggle)
+        ElementsCollection[Name][v.Title]:OnChanged(function()
+            pointer[args[#args]] = UiSetting[v.Title].Value
+            if not v.NoSave then
+                SettingManager:Save()
+            end
+        end)
+    elseif v.Mode == "Label" then 
+        local BuildLabel = {}
+        BuildLabel.Title=v.Title
+        if v.Content then
+            BuildLabel.Content = v.Content
+        end
+        ElementsCollection[Name][v.Title] = Tab:AddParagraph(BuildLabel)
+    elseif v.Mode == "Button" then
+        local BuildButton = {}
+        BuildButton.Title = v.Title
+        BuildButton.Callback = v.Callback
+        if v.Description then 
+            BuildButton.Description = v.Description
+        end
+        ElementsCollection[Name][v.Title]  = Tab:AddButton(BuildButton) 
+    elseif v.Mode == "Slider" then
+        local BuildSlider = {}
+        BuildSlider.Title = v.Title
+
+        if v.Description then 
+            BuildSlider.Description = v.Description
+        end
+        if v.Default then
+            BuildSlider.Default = v.Default
+        end
+        BuildSlider.Min = v.Min
+        BuildSlider.Max = v.Max
+        BuildSlider.Rounding = 1
+        ElementsCollection[Name][v.Title]  = Tab:AddSlider(v.Title,BuildSlider)  
+        ElementsCollection[Name][v.Title]:OnChanged(function (v2)
+            v.OnChange(tonumber(v2))
+        end)
+    elseif v.Mode == "Dropdown" then
+        local BuildDropdown = {}
+        BuildDropdown.Title = v.Title
+
+        if v.Description then 
+            BuildDropdown.Description = v.Description
+        end
+        if v.Multi then
+            BuildDropdown.Multi = v.Multi 
+        end
+        if v.Default then
+            BuildDropdown.Default = v.Default 
+        end
+        BuildDropdown.Values = v.Table
+        ElementsCollection[Name][v.Title]  = Tab:AddDropdown(v.Title,BuildDropdown)  
+        ElementsCollection[Name][v.Title]:OnChanged(v.OnChange)
+    elseif v.Mode == "TextBox" then 
+        local BuildTextBox = {}
+        BuildTextBox.Title = v.Title
+        BuildTextBox.Callback = v.Callback
+        BuildTextBox.Finished = v.Finished
+        ElementsCollection[Name][v.Title]  = Tab:AddInput(v.Title,BuildTextBox)  
+    end
+end
+for _,Name in pairs(UiOrders) do
+    TabCollections[Name] = Window:AddTab({ Title = Name, Icon = "" })
+    local Tab = TabCollections[Name]
+    for i,v in pairs(UiIntilize[Name]) do   
+        if type(v)== 'function' then 
+            for i2,v2 in pairs(v()) do
+                BuildUI(Tab,i2,v2,Name)
+            end
+        else
+            BuildUI(Tab,i,v,Name)
+        end
+
+    end
+end
+return Title, SubTitle, ElementsCollection
+
+     Headers: table: 0x92547b3cdb89cd9b
+
+
+     StatusMessage: OK
+     Success: true
+     StatusCode: 200
+     Body: repeat wait()
+until getgenv().LoadUi and getgenv().IslandCaller and getgenv().SettingManager 
+local Title = "W-azure" .. (getgenv().Premium and " [Premium]" or "")
+local SubTitle = "True V2 discord.gg/w-azure"
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/vinhuchi/rblx/main/FixedFluent.lua"))()
+local UiSetting = Fluent.Options
+local IslandCaller = IslandCaller or getgenv().IslandCaller
+local SettingManager = getgenv().SettingManager 
+local Window = getgenv().Window or Fluent:CreateWindow({
+    Title = Title,
+    SubTitle = SubTitle,
+    TabWidth = 160,
+    Size = UDim2.fromOffset(480, 360),
+    Acrylic = false, -- The blur may be detectable, setting this to false disables blur entirely
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl -- Used when theres no MinimizeKeybind
+})
+local UiOrders = {"Main Farm","Stack Auto farm","Sub Farming","Status","Player-Status","Fruit","Local Player","Travel","Pvp-Visual","Raid-Material","RaceV4-Mirage","Sea Events","Shop","Setting","Webhook","Game-Server","One Click"}
+local TabCollections = {
+}
+ElementsCollection = {}
+for _,Name in pairs(UiOrders) do
+    ElementsCollection[Name]={}
+end
+
+local UiIntilize = {
+    ["Main Farm"] = {
+        {Mode="Label",Title="Only Turn On 1 Farm At The Same Time"},
+        {Mode="Toggle",Title="Auto Katakuri",Description="Turn On Auto Kill Cake Prince And Auto Kill Dough King By Default",Args={"Katakuri","Enable"}},
+        {Mode="Toggle",Title="Auto Bone",Description="",Args={"Bone","Enable"}},
+        {Mode="Toggle",Title="Kill Aura",Description="Farm Near Lv Mob Or Near Position",Args={"Kill Aura","Enable"}},
+        {Mode="Toggle",Title="Fully Auto Dough King",Description="",Args={"Full Dough King","Enable"}},
+        {Mode="Label",Title="Setting For Auto Farm"},
+        {Mode="Label",Title="Anchor Position"},
+        {Mode="Toggle",Title="TP Back Anchor Position",Description="If Exceed Anchor Position Will Tp Back To Anchor Position",Args={"Kill Aura","AnchorTPBack"}},
+        {Mode="Button",Title="Set Anchor Position",Callback=function ()
+            pcall(function ()
+                getgenv().Setting["Kill Aura"].AnchorPosition = tostring(game.Players.LocalPlayer.Character.HumanoidRootPart.Position)
+            end)
+        end},
+        {Mode="Dropdown",Title="Distace From Anchor",Table = (function ()
+            local Table = {}
+            for i=400,4000,400 do 
+                table.insert(Table,i)
+            end
+            return Table
+        end)(),Default=getgenv().Setting["Kill Aura"].DistanceFromAnchor/400,OnChange=function (state)
+            getgenv().Setting["Kill Aura"].DistanceFromAnchor = state
+        end},
+        {Mode="Toggle",Title="Use Sword",Args = {"Mastery","Sword"}},
+        {Mode="Toggle",Title="Sword Switcher",Description="Switch Sword When Have Enough Skills (Default) or Max Mastery",Args={"SwordSwitcher","Enable"}},
+        {Mode="Toggle",Title="Only Switch Max Mastery",Description="Only Switch When Max Mastery",Args={"SwordSwitcher","MaxMastery"}},
+        {Mode="Toggle",Title="Switch Sword When Low", Description = "Must Enable Use Sword", Args={"Mastery","Sword/Low"}},
+        {Mode="Label",Title="Go To Setting To Select Skills"},
+        {Mode="Toggle",Title="Mastery Farm",Description="Need Enable Auto Katakuri Or Bone", Args={"Mastery","Enable"}},
+        {Mode="Toggle",Title ="Aimbot Camera " ,Description = "Aimbot for Mastery Using Camera", Args={"Mastery","Camera"}},
+        {
+            Mode = "Dropdown",
+            Title = "Matery Health",
+            Args = {"Mastery", "Health"},
+            Table = {20,25,30,35,40,45,50},
+            Default = (function ()
+                local Default = {20,25,30,35,40,45,50}
+                local Found = 1
+                if not table.find(Default,getgenv().Setting.Mastery.Health) then 
+                    getgenv().Setting.Mastery.Health = 30
+                else
+                    Found = table.find(Default,getgenv().Setting.Mastery.Health) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.Mastery.Health = tonumber(value)
+                SettingManager:Save()
+            end
+        },        
+        {Mode="Toggle",Title="Mastery Fruit / Gun", Description = "Default Is Fruit, Turning On = Using Gun, Must Enable Mastery Farm",Args = {"Mastery","Fruit/Gun"}},
+        {
+            Mode = "Toggle",
+            Title = "Disable Silent Aim",
+            Args = {"Pvp", "DisableSilentAim"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.DisableSilentAim = state
+                SettingManager:Save()
+            end
+        },
+        {Mode="Button",Title="Fps Boost",Callback = getgenv().LiteFpsBoost}
+    },
+    ["Stack Auto farm"] = {
+        {Mode="Label",Title="Can Turn On Many Auto Farm Cuz Stackable"},
+        {Mode="Toggle",Title="Auto Elite",Description="Sea 3 Function Only",Args={"Elite","Enable"}},
+        {Mode="Toggle",Title="Auto Pirate Raid",Description="Sea 3 Function Only",Args={"Pirate Raid","Enable"}},
+        {Mode="Toggle",Title="Auto Open Haki Pad",Description="Sea 3 Function Only",Args={"Open Pad","Enable"}},
+        {Mode="Toggle",Title="Auto Spawn Rip Indra",Description="Sea 3 Function Only", Args = {"Spawn Rip Indra","Enable"}},
+        {Mode="Toggle",Title="Auto Rip Indra",Description = "Only Kill Rip Indra, Doesnt Do Anything Else",Args={"Rip Indra","Enable"}},
+        {Mode="Toggle",Title="Auto Tushita",Descrition="Sea 3 Function only",Args={"Tushita","Enable"}},
+        {Mode="Toggle",Title="Do Puzzle Electric Claw",Description="Sea 3 Function Only",Args={"Unlock Electric Claw","Enable"}},
+        {Mode="Toggle",Title="Auto Dough King" ,Description="", Args = {"Dough King","Enable"}},
+        {Mode="Toggle",Title="Auto Cake Prince",Description="",Args = {"Cake Prince","Enable"}},
+        {Mode="Toggle",Title="Auto Spawn Soul Reaper",Args = {"Spawn Soul Reaper","Enable"}},
+        {Mode="Toggle",Title="Auto Soul Reaper",Args = {"Soul Reaper","Enable"}},
+        {
+            Mode = "Dropdown",
+            Title = "Select Boss To Snipe",
+            Multi = true, 
+            Table = AllBoss[tostring(game.PlaceId)],
+            Default = getgenv().Setting.BossSniper.SelectedBoss or {},
+            OnChange = function(state)
+                local Values = {}
+                for Value, State in pairs(state) do
+                    if  type(Value) == "string" then
+                        table.insert(Values, Value)
+                    end
+                end 
+                
+
+                getgenv().Setting.BossSniper.SelectedBoss = Values
+                SettingManager:Save()
+            end
+        },     
+        {Mode="Toggle",Title="Start Boss Snipe",Description="",Args={"BossSniper","Enable"}},
+        {Mode="Toggle",Title="Auto Bartilo Quest",Description="Sea 2 Function",Args = {"Bartilo","Enable"}},
+        {Mode="Toggle",Title="Auto Race Evolve",Description="Sea 2 Function, Need Bartilo Quest Finish",Args = {"Race Evolve","Enable"}},
+        {Mode="Toggle",Title="Auto Factory",Description="Sea 2 Function Only",Args = {"Factory","Enable"}},
+        {Mode="Toggle",Title="Auto Spawn Black Beard",Description="Sea 2 Function Only", Args = {"Spawn Black Beard","Enable"}},
+        {Mode="Toggle",Title="Auto Black Beard",Description="Sea 2 Function Only", Args = {"Black Beard","Enable"}},
+        {Mode="Toggle",Title="Auto Ghoul",Description="Travel To Sea2 and Stack Farming Until Have Ghoul", Args = {"Get Ghoul","Enable"}},
+        {Mode="Toggle",Title="Auto Soul Guitar",Args = {"Soul Guitar","Enable"}},
+        {Mode="Toggle",Title="Auto Soul Guitar Material",Args = {"Material Soul Guitar","Enable"}},
+        {Mode="Toggle",Title="Auto CDK (DO NOT USE TESTING)",Args = {"CDK","Enable"}},
+        
+        --{Mode="Toggle",Title="Auto Collect Gift", Description="Sea 3 Function Event",Args = {"Winter Event","Enable"}}
+    },
+    ["Sub Farming"] = {
+        {Mode="Label",Title="Disable All Stack + Main Farm Before Using"},
+        {Mode="Button",Title="Upgrade Yoru V2",Description="Only useable if you have yoru",Callback=function()
+            IslandCaller("YoruV2")
+        end},
+        {Mode="Toggle",Title="Yoru V3",Description="Auto Upgrade Yoru V3",Args = {"YoruV3","Enable"}},
+        {Mode="Dropdown",Title="Select Player",Description="Select Account to upgrade together",Table=IslandCaller("__StrGetPlayers"),OnChange=function (state)
+            getgenv().Setting["YoruV3"].SelectedPlayer = state
+        end},
+        {Mode="Button",Title="Refresh Players",Callback=function()
+            ElementsCollection["Sub Farming"]["Select Player"]:SetValues(IslandCaller("__StrGetPlayers"))
+        end},
+        {Mode="Toggle",Title="Account To Upgrade Yoru V3",Description="Turn On This If This Is Account Want to Upgrade, do not if account to spawn Black Beard",Args = {"YoruV3","Upgrade"}},
+        {Mode="Toggle",Title="Race Evolve Hop",Description="Turning On This Will Make Race Evolve Hopping For Faster Farming",Args = {"Race Evolve","Hop"}},
+        {Mode="Toggle",Title="Black Beard Hop",Description="Auto Hop For Black Beard",Args={"Black Beard Hop","Enable"}},
+        {Mode="Toggle",Title="Tushita Hop (Need All Haki Colors)",Description="Auto Chest + Auto Elite Till Find Cup And Spawn Then Get Tushita",Args={"Tushita Hop__1","Enable"}},
+        {Mode="Toggle",Title="Hybrid Fruit Hop",Description="Pirate Raid + Collect Fruit Hop",Args={"Hybrid Fruit Hop","Enable"}},
+        {Mode="Toggle",Title="Raid Fruit Hop",Description="Pirate Raid + Collect Fruit + Raid Hop" ,Args={"Raid Fruit Hop","Enable"}},
+        {Mode="Toggle",Title="Auto Law",Description="Auto Farm Law",Args={"Law","Enable"}},
+        {Mode="Toggle",Title="Auto Cyborg",Description="Auto Chest For Fist Then Auto Law",Args={"Fully Cyborg","Enable"}},
+        {Mode="Toggle",Title="Auto Ghoul Hop",Description="Auto Find Torch + Ghoul (Very Rare, Dont Recommend)",Args={"Fully Ghoul","Enable"}},
+        {Mode="Toggle",Title="Boss Snipe Hop",Description="",Args={"BossSniper","Hop"}},
+        {Mode="Label",Title="Chest Count"},
+        {Mode="Toggle",Title="Auto Chest",Description="Stop On God Chalice And Fist Of Darkness By Default",Args={"Collect Chest","Enable"}},
+        {Mode="Toggle",Title="Auto Chest Hop",Description="Hop After x Chest",Args = {"Collect Chest","Hop"}},
+        {
+            Mode = "Dropdown",
+            Title = "x Chest To Hop",
+            Args = {"Collect Chest", "LimitChest"},
+            Table = {20,25,30,35,40,45,50,60,70},
+            Default = (function ()
+                local Default = {20,25,30,35,40,45,50,60,70}
+                local Found = 9
+                if not table.find(Default,getgenv().Setting["Collect Chest"].LimitChest) then 
+                    getgenv().Setting["Collect Chest"].LimitChest = 70
+                else
+                    Found = table.find(Default,getgenv().Setting["Collect Chest"].LimitChest) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting["Collect Chest"].LimitChest = tonumber(value)
+                SettingManager:Save()
+            end
+        },        
+
+        {Mode="Toggle",Title="Insta Tp Chest",Description="Have A Risk Of Getting Banned(Noone yet)",Args={"Collect Chest","InstaTP"}},
+        {Mode="Toggle",Title="Auto Level Observation",Description="Farm Observation Level Till Max",Args={"Level Observation","Enable"}},
+        {Mode="Toggle",Title="Level Observation Hop",Description="Hopping For leveling Observation",Args={"Level Observation","Hop"}},
+        {Mode="Toggle",Title="Auto Observation V2",Description="Must Have Maxed Ken Haki + Finish Citizen Quest",Args = {"Evolve Observation","Enable"}},
+        {Mode="Toggle",Title="Observation V2 Hop",Description="Hopping For Finding Materials To Get Evolve Faster",Args = {"Evolve Observation","Hop"}},
+        {Mode="Toggle",Title="Auto Saber Hop",Args={"__SaberHop","Enable"}},
+        {Mode="Toggle",Title="Auto Pole Hop",Args={"__PoleHop","Enable"}},
+        {Mode="Toggle",Title="Auto Citizen Quest",Description="Must Be Level 1800 Above",Args = {"Citizen Quest","Enable"}},
+        {Mode="Toggle",Title="Citizen Quest Hop",Description="",Args = {"Citizen Quest","Hop"}},
+        {Mode="Toggle",Title="Auto Get Rainbow Haki",Description="",Args = {"Rainbow Haki","Enable"}},
+        {Mode="Toggle",Title="Rainbow Haki Hop",Description="Hopping For Fast Getting Rainbow Haki",Args = {"Rainbow Haki","Hop"}},
+    },
+    ["Status"] = {
+        {Mode="Label",Title="Client Time"},
+        {Mode="Label",Title="Farming Status"},
+        {Mode="Label",Title="Weapon Status [One Click]"},
+        {Mode="Label",Title="Dimension Kill"},
+        {Mode="Label",Title="Bribe Status"},
+        {Mode="Label",Title="Elite Status"},
+        {Mode="Label",Title="Mirage Status"},
+        {Mode="Label",Title="Kitsune Status"},
+        {Mode="Label",Title="FullMoon Status"},
+    },
+    ["Player-Status"] = {
+        {Mode="Label",Title="W.I.P"}
+    },
+    ["Fruit"] = {
+        {
+            Mode = "Toggle",
+            Title = "Auto Collect Fruit",
+            Description = "Stackable With Auto Farm",
+            Args = {"GetFruit", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.GetFruit.Enable = state
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Store Fruit",
+            Args = {"Fruit", "AutoStore"},
+            OnChange = function(state)
+                getgenv().Setting.Fruit.AutoStore = state
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Snipe Fruit",
+            Args = {"Fruit", "EnableSnipeFruit"},
+            Description = "Auto Buy Fruit If In The List And You Dont Have Fruit In That List",
+            OnChange = function(state)
+                getgenv().Setting.Fruit.EnableSnipeFruit = state
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Snipe Mirage Fruit [Premium]",
+            Description = "Stackable with Auto Farm, Snipe If In Mirage Fruit Stock And Mirage Dealer Appear",
+            Args = {"Mirage Snipe Fruit", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting["Mirage Snipe Fruit"].Enable = state
+            end
+            
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Select Fruit To Snipe",
+            Multi = true, 
+            Table = FruitTable,
+            Default = getgenv().Setting.Fruit.FruitsToSnipe or {},
+            OnChange = function(state)
+                local Values = {}
+                for Value, State in pairs(state) do
+                    if  type(Value) == "string" then
+                        table.insert(Values, Value)
+                    end
+                end 
+                
+
+                getgenv().Setting.Fruit.FruitsToSnipe = Values
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Local Player"] = {
+        --[[{
+            Mode = "Button",
+            Title = "Kick Player Safe Zone",
+            Description = "Near Safe Zone + Need To Shit On Ship",
+            Callback = KickPlayer
+        },
+        {
+            Mode = "Button",
+            Title = "Buy Ship",
+            Description = "",
+            Callback = function()
+=
+            end
+        },
+
+        {
+            Mode = "Button",
+            Title = "Fly",
+            Description = "",
+            Callback = function()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Stop Fly",
+            Description = "",
+            Callback = function()
+            end
+        },]]
+        {
+            Mode = "Button",
+            Title = "Remove Enemies Skill Stun",
+            Callback = function()
+                IslandCaller("RemoveEnemiesStun")
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Clip",
+            Args = {"LocalPlayer", "NoClip"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.NoClip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Clip Ship",
+            Args = {"LocalPlayer", "NoClipShip"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.NoClipShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Buso",
+            Args = {"LocalPlayer", "AutoBuso"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoBuso = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Enable Observation",
+            Args = {"LocalPlayer", "AutoEnableObservation"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoEnableObservation = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Water Walker",
+            Args = {"LocalPlayer", "WaterWalker"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.WaterWalker = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Use Race V3",
+            Args = {"LocalPlayer", "AutoUseV3"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoUseV3 = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Use Race V4",
+            Args = {"LocalPlayer", "AutoUseV4"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.AutoUseV4 = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Soru No CD",
+            Args = {"LocalPlayer", "SoruNoCD"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.SoruNoCD = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Dash Modify",
+            Args = {"LocalPlayer", "DashModify"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.DashModify = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Dash No CD",
+            Args = {"LocalPlayer", "DashNoCD"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.DashNoCD = state
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Change Dash Rage",
+            Args = {"LocalPlayer", "DoDashRange"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.DoDashRange = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Dash Range",
+            Args = {"LocalPlayer", "DashRange"},
+            Table = {100,150,200,250,300,500,750,1000},
+            Default = (function ()
+                local Default = {100,150,200,250,300,500,750,1000}
+                local Found = 3
+                if not table.find(Default,getgenv().Setting.LocalPlayer.DashRange) then 
+                    getgenv().Setting.LocalPlayer.DashRange = 200 
+                else
+                    Found = table.find(Default,getgenv().Setting.LocalPlayer.DashRange) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.LocalPlayer.DashRange = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+
+            Mode = "Toggle",
+            Title = "Infinity Geppo",
+            Args = {"LocalPlayer", "InfGeppo"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.InfGeppo = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Speed Hack",
+            Args = {"LocalPlayer", "SpeedHack"},
+            OnChange = function(state)
+                getgenv().Setting.LocalPlayer.SpeedHack = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Speed",
+            Args = {"LocalPlayer", "Speed"},
+            Default = getgenv().Setting.LocalPlayer.Speed,
+            Min = 16,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.LocalPlayer.Speed = value
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Travel"] = {
+        {Mode="Button",Title="Stop Tween",Callback=function() IslandCaller("StopTween") end},
+        {Mode="Button",Title="Travel Sea 1",Callback=function ()
+            IslandCaller("Travel","Sea1")
+        end},
+        {Mode="Button",Title="Travel Sea 2",Callback=function ()
+            IslandCaller("Travel","Sea2")
+        end},
+        {Mode="Button",Title="Travel Sea 3",Callback=function ()
+            IslandCaller("Travel","Sea3")
+        end},
+        {Mode="Dropdown",Title="Insta Tp Place",Table=(function ()
+            local Tbl = {}
+            for i,v in pairs(getgenv().IslandVariable.GatePos) do
+                table.insert(Tbl,i)
+            end
+            return Tbl
+        end)(),OnChange=function (state)
+            if type(state) == "string" and getgenv().IslandVariable.GatePos[state] then
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("requestEntrance",getgenv().IslandVariable.GatePos[state])
+            end
+        end},
+        {Mode="Dropdown",Title="Travel Place",Table=getgenv().IslandVariable.__Places,OnChange=function (state)
+            getgenv().IslandVariable.SelectedPlace = state
+        end},
+        {Mode="Button",Title="Start Traveling",Callback=function ()
+            IslandCaller("TweenSelectedPlace")
+        end},
+    },
+    ["Pvp-Visual"] = {
+        {Mode="Dropdown",Title="Select Player",Table=IslandCaller("__StrGetPlayers"),OnChange=function (state)
+            SelectedPlayer = state
+        end},
+        {Mode="Button",Title="Refresh Players",Callback=function()
+            ElementsCollection["Pvp-Visual"]["Select Player"]:SetValues(IslandCaller("__StrGetPlayers"))
+        end},
+        {
+            Mode = "Toggle",
+            Title = "Tween To Player",
+            Args = {"TweenToPlayer"},
+            OnChange = function(state)
+                getgenv().Setting.TweenToPlayer = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Shoot Gun(100%)",
+            Args = {"Pvp", "AutoShootGun"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.AutoShootGun = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Silent Aim Near Player",
+            Args = {"Pvp", "SilentAimNear"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.SilentAimNear = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Kill Near Player [Premium]",
+            Description = "Use Very Fast Attack",
+            Args = {"Pvp", "AutoKillNear"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.AutoKillNear = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Only Shoot In Shootable Distance",
+            Args = {"Pvp", "GunDistanceCheck"},
+            OnChange = function(state)
+                getgenv().Setting.Pvp.GunDistanceCheck = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Players",
+            Args = {"ESP", "Player"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Player = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Boss",
+            Args = {"ESP", "Boss"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Boss = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Chests",
+            Args = {"ESP", "Chest"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Chest = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Island",
+            Args = {"ESP", "Island"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Island = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "ESP Fruit",
+            Args = {"ESP", "Fruit"},
+            OnChange = function(state)
+                getgenv().Setting.ESP.Fruit = state
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Raid-Material"] = {
+        {
+            Mode = "Label",
+            Title = "Selected Material",
+        },
+        {
+            Mode = "Toggle",
+            Title = "Start Farming Material",
+            Args = {"Material","Enable"},
+            Callback = function (state)
+                getgenv().Setting.Material.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {Mode="Dropdown",Title="Materials",Table=getgenv().IslandVariable.MaterialName,OnChange=function (state)
+            getgenv().Setting.Material.Select = state
+            SettingManager:Save()        
+        end},
+        {
+            Mode = "Label",
+            Title = "Selected Chip",
+            Content = getgenv().Setting.Raid.Select or ""
+        },
+        {Mode="Dropdown",Title="Select",Table={"Flame","Ice","Sand","Quake","Light","Dark","String","Rumble","Magma","Human: Buddha","Bird: Phoenix","Dough"},OnChange=function (state)
+            getgenv().Setting.Raid.Select = state
+            SettingManager:Save()        
+        end}, --Todo: Get Chips Data From Game
+        {
+            Mode = "Toggle",
+            Title = "Enable Raid",
+            Description = "Must Turn On This In Order To Raiding Works",
+            Args = {"Raid", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Select Current Fruit Chip",
+            Callback = function()
+                getgenv().Setting.Raid.Select = getgenv().IslandVariable.AutoChip[LP.Data.DevilFruit.Value] or ""
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Delay Next Island",
+            Description = "May Get Reseted if You Turn Off This",
+            Args = {"Raid", "NoDelay"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.NoDelay = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Awaken",
+            Args = {"Raid", "Awaken"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.Awaken = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Unstore Fruit Under 1M",
+            Args = {"Raid", "GetFruitUnder1M"},
+            OnChange = function(state)
+                getgenv().Setting.Raid.GetFruitUnder1M = state
+                SettingManager:Save()
+            end
+        }
+    },
+    ["Sea Events"] = {
+        {
+            Mode = "Button",
+            Title = "Tp Your Ship To Current Pos",
+            Callback = function()
+                IslandCaller("TPCurrentShip")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Remove Sea Terror Effect",
+            Callback = function()
+                if game.Lighting:FindFirstChild("SeaTerrorCC") then
+                    game.Lighting.SeaTerrorCC:Destroy()
+                end
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Night Atmosphere",
+            Callback = function()
+                IslandCaller("NightAtmosphere")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Dark Atmosphere",
+            Callback = function()
+                IslandCaller("DarkAtmosphere")
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Ship Speed Modifier",
+            Args = {"SeaEvents", "ShipSpeedModifier"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.ShipSpeedModifier = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Ship Speed",
+            Args = {"SeaEvents", "ShipSpeed"},
+            Default = getgenv().Setting.SeaEvents.ShipSpeed,
+            Min = 200,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.ShipSpeed = value
+                SettingManager:Save()
+            end
+        },
+        {Mode="Dropdown",
+        Title="Select Ship",
+        Table={"PirateSloop","Swan Ship","Beast Hunter","PirateGrandBrigade","MarineGrandBrigade","PirateBrigade","MarineBrigade"},
+        Default = getgenv().Setting.SeaEvents.SelectShip 
+        and table.find({"PirateSloop","SwanShip","Beast Hunter","PirateGrandBrigade","MarineGrandBrigade","PirateBrigade","MarineBrigade"},getgenv().Setting.SeaEvents.SelectShip) or 1,
+        OnChange=function (state)
+            getgenv().Setting.SeaEvents.SelectShip = state
+            SettingManager:Save()        
+        end},
+        {
+            Mode = "Toggle",
+            Title = "Start Farming Sea Event",
+            Description = "For Farming Sharks, Piranha, Terror Shark, SeaBeast, Ship",
+            Args = {"SeaEvents", "StartSeaEvents"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.StartSeaEvents = state
+                SettingManager:Save()
+            end
+        },
+       --[[ {
+            Mode = "Toggle",
+            Title = "Auto Spawn Ship",
+            Description = "For Farming Sharks, Piranha, Terror Shark",
+            Args = {"SeaEvents", "AutoBuyShip"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoBuyShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Tp Ship To Zone 6",
+            Description = "Insta TP Ship, Must Not Have Any Players In Ship Or Errors",
+            Args = {"SeaEvents", "AutoTpShip"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoTpShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Sit",
+            Description = "Auto Sit At Your Ship",
+            Args = {"SeaEvents", "AutoSit"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoSit = state
+                SettingManager:Save()
+            end
+        },]]
+        {
+            Mode = "Toggle",
+            Title = "Auto Terror Shark",
+            Description = "Farm Terror Shark",
+            Args = {"SeaEvents", "TerrorShark"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.TerrorShark = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Sea Beasts",
+            Description = "Farm Sea Beasts",
+            Args = {"SeaEvents", "SeaBeast"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.SeaBeast = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Ship",
+            Description = "Farm Ship",
+            Args = {"SeaEvents", "Ship"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Ship = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Ignore Sea Beast",
+            Description = "Fly To Ignore Sea Beast, Must Turn On Auto Sea beast",
+            Args = {"SeaEvents", "IgnoreSeaBeast"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.IgnoreSeaBeast = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Ignore Ship",
+            Description = "TP Ship Back So Ship Despawn, Must Turn On Auto Ship",
+            Args = {"SeaEvents", "IgnoreShip"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.IgnoreShip = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Shark",
+            Description = "Farm Sharks",
+            Args = {"SeaEvents", "Shark"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Shark = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Piranha",
+            Description = "Farm Piranha",
+            Args = {"SeaEvents", "Piranha"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Piranha = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Safe Mode",
+            Args = {"SeaEvents", "SafeMode"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.SafeMode = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Escape Rough Sea",
+            Args = {"SeaEvents", "AutoEscapeRoughSea"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoEscapeRoughSea = state
+                SettingManager:Save()
+            end
+        },
+        --[[{
+            Mode = "Toggle",
+            Title = "Only Farm Near",
+            Description = "Only Farm Near Mobs So You Dont Have To Deal With Far Mobs That Aren't From Yours",
+            Args = {"SeaEvents", "OnlyFarmNearMob"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.OnlyFarmNearMob = state
+                SettingManager:Save()
+            end
+        },]]
+        {
+            Mode = "Label",
+            Title = "Leviathan Section"
+        },
+        --{
+         --   Mode = "Button",
+           -- Title = "Tween Ship To Tiki",
+        --    Description = "For Transporting Heart",
+        --},
+        {
+            Mode = "Button",
+            Title = "Tp To Frozen island",
+            Description = "It Must Spawn First",
+            Callback = function()
+                IslandCaller("TPLeviathanIsland")
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Find Leviathan",
+            Description = "Leviathan",
+            Args = {"SeaEvents", "AutoFindLeviathan"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoFindLeviathan = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Leviathan",
+            Description = "Leviathan",
+            Args = {"SeaEvents", "Leviathan"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.Leviathan = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Multi Segments Attack",
+            Description = "More",
+            Args = {"SeaEvents", "MultiSegmentAttack"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.MultiSegmentAttack = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Kitsune Section"
+        },
+        {
+            Mode = "Button",
+            Title = "Tween To Kitsune Island",
+            Description = "",
+            Callback = function()
+
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Find Kitsune Island",
+            Description = "Wait For Near Full Moon Then Enable This",
+            Args = {"SeaEvents", "AutoFindKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoFindKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Start Kitsune When In Island",
+            Args = {"SeaEvents", "AutoStartKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoStartKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Collect Azure Wisp",
+            Args = {"SeaEvents", "AutoCollectKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoCollectKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Azure Trade Min",
+            Args = {"SeaEvents", "AzureEmberLimit"},
+            Table = {15,20,25,30},
+            Default = (function ()
+                local Default = {15,20,25,30}
+                local Found = 3
+                if not table.find(Default,getgenv().Setting.SeaEvents.AzureEmberLimit) then 
+                    getgenv().Setting.SeaEvents.AzureEmberLimit = 25
+                else
+                    Found = table.find(Default,getgenv().Setting.SeaEvents.AzureEmberLimit) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.AzureEmberLimit = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Trade Azure Wisp",
+            Args = {"SeaEvents", "AutoTradeKitsune"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.AutoTradeKitsune = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Sea Events Setting"
+        },
+        --[[
+        {
+            Mode = "Toggle",
+            Title = "Spin Ship If In Farming",
+            Description = "Safe Mode Ship",
+            Args = {"SeaEvents", "SpinShipAttack"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.SpinShipAttack = state
+                SettingManager:Save()
+            end
+        },]]
+        {
+            Mode = "Toggle",
+            Title = "Spin Ship If Farming",
+            Description = "Safe Mode Ship",
+            Args = {"SeaEvents", "FlyShipFarm"},
+            OnChange = function(state)
+                getgenv().Setting.SeaEvents.FlyShipFarm = state
+                SettingManager:Save()
+            end
+        },
+       -- {
+        --    Mode = "Toggle",
+        --    Title = "Spin Ship If Idle",
+        --    Description = "Safe Mode Ship",
+        --    Args = {"SeaEvents", "SpinShipIdle"},
+        --    OnChange = function(state)
+        --        getgenv().Setting.SeaEvents.SpinShipIdle = state
+        --        SettingManager:Save()
+        --    end
+        --},
+        {
+            Mode = "Slider",
+            Title = "Spin Distance",
+            Args = {"SeaEvents", "SpinDistance"},
+            Default = getgenv().Setting.SeaEvents.SpinDistance,
+            Min = 10,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.SpinDistance = value
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Near Distance",
+            Args = {"SeaEvents", "DistanceNearMob"},
+            Default = getgenv().Setting.SeaEvents.DistanceNearMob or 300,
+            Min = 300,
+            Max = 1000,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.DistanceNearMob = value
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Sea Beast Near Distance",
+            Args = {"SeaEvents", "DistanceNearSeaBeast"},
+            Default = getgenv().Setting.SeaEvents.DistanceNearSeaBeast or 300,
+            Min = 300,
+            Max = 2000,
+            OnChange = function(value)
+                getgenv().Setting.SeaEvents.DistanceNearSeaBeast = value
+                SettingManager:Save()
+            end
+        }
+    
+    },
+    ["RaceV4-Mirage"] = {
+        {
+            Mode = "Button",
+            Title = "TP To Gear",
+            Callback = function()
+                IslandCaller("TweenGear")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP To Advandced Fruit Dealer",
+            Callback = function()
+                IslandCaller("TweenFruitDealer")
+            end
+            
+        },
+        {
+            Mode = "Button",
+            Title = "Tween To Highest Place Mirage",
+            Callback = function()
+                pcall(function()
+                    IslandCaller("TweenHighestPlace")
+                end)
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Fully Auto Unlock Race v4 Entrance",
+            Args = {"FullyRaceV4_Entrance", "Enable"},
+        },
+        {
+            Mode = "Label",
+            Title = "Trial Status",
+        },
+        {
+            Mode = "Toggle",
+            Title = "Check Status + Upgrade Race V4",
+            Args = {"RaceV4", "CheckStatus"},
+            OnChange = function(state)
+                getgenv().Setting.RaceV4.CheckStatus = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Start Trial With Team",
+            Args = {"TrialTeam", "Enable"},
+        },
+        {Mode="Dropdown",Title="Team Trial Player 1",Table=IslandCaller("__StrGetPlayers"),Default=getgenv().Setting["TrialTeam"].TrialPlayer1,OnChange=function (state)
+            getgenv().Setting["TrialTeam"].TrialPlayer1 = state
+            SettingManager:Save()
+        end},
+        {Mode="Dropdown",Title="Team Trial Player 2",Table=IslandCaller("__StrGetPlayers"),Default=getgenv().Setting["TrialTeam"].TrialPlayer2,OnChange=function (state)
+            getgenv().Setting["TrialTeam"].TrialPlayer2 = state
+            SettingManager:Save()
+        end},
+        {Mode="Button",Title="Refresh Players",Callback=function()
+            ElementsCollection["RaceV4-Mirage"]["Team Trial Player 1"]:SetValues(IslandCaller("__StrGetPlayers"))
+            ElementsCollection["RaceV4-Mirage"]["Team Trial Player 2"]:SetValues(IslandCaller("__StrGetPlayers"))
+        end},
+        {
+            Mode = "Toggle",
+            Title = "Fully Auto Finish Trial [Premium]",
+            Description = "Train, Auto Kill After Trial, Auto Activate Race",
+            Args = {"FullyAutoTrial", "Enable"},
+            OnChange = function(state)
+                if IsPremium then
+                    getgenv().Setting.FullyAutoTrial.Enable = state
+                end
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Train",
+            Args = {"AutoTrainTrial", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.AutoTrainTrial.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Finish Trial",
+            Args = {"Trial", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Choose Gear",
+            Args = {"Trial", "ChooseGear"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.ChooseGear = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Kill After Trial [Premium]",
+            Args = {"Trial", "AutoKill"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.AutoKill = state
+                SettingManager:Save()
+            end
+        },
+
+        {
+            Mode = "Toggle",
+            Title = "Auto Look Moon",
+            Args = {"Trial", "LookAtMoon"},
+            OnChange = function(state)
+                getgenv().Setting.Trial.LookAtMoon = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP To Temple Of Time",
+            Callback = function()
+                IslandCaller("TPTempleOfTime")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP To Acient Clock",
+            Callback = function()
+                IslandCaller("TPAcientClock")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "TP Current Race Entrance",
+            Callback = function()
+                IslandCaller("TPCurrentEntrance")
+            end
+        },
+    },
+    ["Shop"] = {
+        {
+            Mode = "Toggle",
+            Title = "Auto Buy Bribe",
+            Args = {"Shop", "AutoBuyBribe"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoBuyBribe = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Random Bone",
+            Args = {"Shop", "AutoRandomBone"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoRandomBone = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Random Fruit",
+            Args = {"Shop", "AutoRandomFruit"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoRandomFruit = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Buy Legendary Sword",
+            Args = {"Shop", "AutoLegendarySword"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.AutoLegendarySword = state
+                SettingManager:Save()
+            end
+        },
+
+        {
+            Mode = "Toggle",
+            Title = "Auto Buy Haki Color",
+            Args = {"Shop", "HakiColor"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.HakiColor = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Only Buy Legendary Haki Color",
+            Args = {"Shop", "LegendaryHakiColor"},
+            OnChange = function(state)
+                getgenv().Setting.Shop.LegendaryHakiColor = state
+                SettingManager:Save()
+            end
+        },
+        
+       --[[ {
+            Mode = "Toggle",
+            Title = "Auto Trade X2 Exp (Candy)",
+            Args = {"Shop", "Candy X2 EXP"},
+            OnChange = function(state)
+                getgenv().Setting.Shop["Candy X2 EXP"] = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Trade 500 Fragments (Candy)",
+            Args = {"Shop", "Candy 500 Fragments"},
+            OnChange = function(state)
+                getgenv().Setting.Shop["Candy 500 Fragments"] = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Stats Refund( Candy)",
+            Description = "75 Candy",
+            Callback = function()
+                local args = {
+                    [1] = "Candies",
+                    [2] = "Buy",
+                    [3] = 1,
+                    [4] = 2
+                }
+                
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer(unpack(args))            
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Reroll Race( Candy)",
+            Description = "100 Candy",
+            Callback = function()
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("Candies","Buy",1,3)         
+            end
+
+            
+        },]]
+        {
+            Mode = "Button",
+            Title = "Stats Refund",
+            Description = "2500 Fragment",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BlackbeardReward", "Refund", "2")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Reroll Race",
+            Description = "3000 Fragment",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BlackbeardReward", "Reroll", "2")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Race To Ghoul",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Ectoplasm", "Change", 4)
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Change Race To Cyborg",
+            Callback = function()
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("CyborgTrainer", "Buy")
+            end
+        }
+    },
+    ["Setting"] = {
+        {
+            Mode = "Label",
+            Title = "Tween Section"
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Tween Speed",
+            Args = {"Tween", "Speed"},
+            Table = {250,275,300,325,350},
+            Default = (function ()
+                local Default = {250,275,300,325,350}
+                local Found = 1
+                if not table.find(Default,getgenv().Setting.Tween.Speed) then 
+                    getgenv().Setting.Tween.Speed = 250 
+                else
+                    Found = table.find(Default,getgenv().Setting.Tween.Speed) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.Tween.Speed = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Tween Pause",
+            Description = "Prevent Security Kick",
+            Args = {"Tween", "Pause"},
+            OnChange = function(state)
+                getgenv().Setting.Tween.Pause = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Bring Mob Section"
+        },
+        {
+            Mode = "Toggle",
+            Title = "Bring Mob",
+            Description = "Not Recommended May Error But Works If in PS",
+            Args = {"BringMob", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.BringMob.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Slider",
+            Title = "Bring Mob Radius",
+            Args = {"BringMob", "Radius"},
+            Default = getgenv().Setting.BringMob.Radius or 200,
+            Min = 200,
+            Max = 500,
+            OnChange = function(value)
+                getgenv().Setting.BringMob.Radius = value
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Fast Attack Section"
+        },
+        {
+            Mode = "Toggle",
+            Title = "Stop Clicking",
+            Args = {"FastAttack", "StopClick"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.StopClick = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Fast Attack",
+            Args = {"FastAttack", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Very Fast Attack",
+            Description = " Dont Use, Just Change Fast Attack % Time to 100%",
+            Args = {"FastAttack", "SupremeAttack"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.SupremeAttack = state
+                SettingManager:Save()
+            end
+        },
+       {
+            Mode = "Toggle",
+            Title = "Old Fast Attack",
+            Description = "Use Less For Now",
+            Args = {"FastAttack", "OldFastAttack"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.OldFastAttack = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "On Player",
+            Description = "Fast Attack On Player",
+            Args = {"FastAttack", "OnPlayer"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.OnPlayer = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "On Mob",
+            Description = "Fast Attack On Mob",
+            Args = {"FastAttack", "OnMob"},
+            OnChange = function(state)
+                getgenv().Setting.FastAttack.OnMob = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Fast Attack %Time",
+            Args = {"FastAttack", "TimeFastAttack"},
+            Table = {10,25,50,75,100},
+            Default = (function ()
+                local Default = {10,25,50,75,100}
+                local Found = 5
+                if not table.find(Default,getgenv().Setting.FastAttack.TimeFastAttack) then 
+                    getgenv().Setting.FastAttack.TimeFastAttack = 100
+                else
+                    Found = table.find(Default,getgenv().Setting.FastAttack.TimeFastAttack) 
+                end
+                return Found
+            end)(),
+            OnChange = function(value)
+                getgenv().Setting.FastAttack.TimeFastAttack = tonumber(value)
+                SettingManager:Save()
+            end
+        }, 
+        {
+            Mode = "Slider",
+            Title = "Attack Time",
+            Args = {"FastAttack", "TimeToAttack"},
+            Default = getgenv().Setting.FastAttack.TimeToAttack,
+            Min = 3,
+            Max = 10,
+            Rounding = 1,
+            OnChange = function(value)
+                getgenv().Setting.FastAttack.TimeToAttack = tonumber(value)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Mastery Position",
+            Args = {"FastAttack", "TimeToAttack"},
+
+        },
+        function ()
+            local MultiBuild = {}
+            local Pos = {"X","Y","Z"}
+            for i,v in pairs(Pos) do
+                table.insert(
+                    MultiBuild,
+                    {
+                        Mode = "Slider",
+                        Title = "Position "..v,
+                        Args = {"Mastery", v},
+                        Default = getgenv().Setting.Mastery[v] or ( (v == "Y") and  30 or 0),
+                        Min = 0,
+                        Max = 60,
+                        OnChange = function(value)
+                            getgenv().Setting.Mastery[v] = value
+                            SettingManager:Save()
+                        end
+                    } 
+                )
+            end
+            return MultiBuild
+        end,
+        {
+            Mode = "Dropdown",
+            Title = "Weapon For Sea Events",
+            Multi = true, 
+            Table = {"Melee","Blox Fruit","Sword","Gun"},
+            Default = (function ()
+                local Default = {}
+                for i,v in pairs(getgenv().Setting.SkillsSet2) do
+                    if type(i) == "string" then
+                        table.insert(Default,i)
+                    end
+                end
+                return Default
+            end)(),
+            OnChange = function(ReturnTable)
+                local ProxyTable = {}
+                for Value, State in pairs(ReturnTable) do
+                    if type(Value) == "string" then
+                        ProxyTable[Value]=State
+                    end
+                end
+                getgenv().Setting.SkillsSet2 = ProxyTable
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Label",
+            Title = "Fruit Skills Setting"
+        },
+        {
+            Mode = "Toggle",
+            Title = "Click For fruit",
+            Description = "For Kitsune, Mammoth, Light, Ice, ...",
+            Args = {"SkillsSettingRemake","ClickFruit"},
+            OnChange = function(state)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Dropdown",
+            Title = "Skills For fruit",
+            Multi = true, 
+            Table = {"Z","X","C","V","F"},
+            Default = getgenv().Setting.SkillsSettingRemake["Blox Fruit"],
+            OnChange = function(state)
+                local Values = {}
+                for Value, State in pairs(state) do
+                    if  type(Value) == "string" then
+                        table.insert(Values, Value)
+                    end
+                end 
+                
+
+                getgenv().Setting.SkillsSettingRemake["Blox Fruit"] = Values
+                SettingManager:Save()
+            end
+        }
+
+    },
+    ["Webhook"] = {
+        {
+            Mode = "TextBox",
+            Title = "Webhook",
+            Default = getgenv().Setting.Webhook.Url,
+            Callback = function(arg)
+                getgenv().Setting.Webhook.Url = arg
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Test Webhook",
+            Callback = function()
+                getgenv().WebhookCenter.SimpleSend("Testing","Success")
+            end
+        },
+    },
+    ["Game-Server"] = {
+        {
+            Mode = "Button",
+            Title = "Copy Job Id",
+            Callback = function ()
+                setclipboard(tostring(game.JobId))
+            end
+        },
+        {
+            Mode = "TextBox",
+            Title = "Server Code [Premium]",
+            Callback = function(arg)
+                getgenv().PreServerCode = arg
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Join Server Code",
+            Args = {"Misc","__PreJoin"},
+            OnChange = function(state)
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Clear Server Code",
+            Callback = function(arg)
+                local _, err = pcall(function ()
+                    ElementsCollection["Game-Server"]["Server Code [Premium]"]:SetValue("")
+                end)
+                if err then
+                    print(err)
+                end
+            end
+        },
+        {
+            Mode = "TextBox",
+            Title = "Job id",
+            Callback = function(arg)
+                pcall(function ()
+                    local a = arg
+                    if a ~= "" then
+                        game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer("teleport", a)     
+                    end
+                end)
+
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "No Fog",
+            Description = "For Better Vision",
+            Args = {"Misc", "__NoFog"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__NoFog = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Remove Effect (Fluxus Only)",
+            Description = "Disable And Rejoin To Get The Effect Back If You Want Effects",
+            Args = {"Misc", "__RemoveEffects"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__RemoveEffects = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable 3D Render",
+            Args = {"Misc", "DisableRender3D"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.DisableRender3D = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable Notifications",
+            Args = {"Misc", "__RemoveNotification"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__RemoveNotification = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable DMG Counter",
+            Args = {"Misc", "__RemoveDMGCounter"},
+            OnChange = function(state)
+                getgenv().Setting.Misc.__RemoveDMGCounter = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Server Hop",
+            Callback = function ()
+                IslandCaller("TrueServerHop")
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Low Player Server Hop",
+            Callback = function ()
+                IslandCaller("TrueServerHop",1,3)
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Rejoin",
+            Callback = function ()
+                game:GetService("ReplicatedStorage").__ServerBrowser:InvokeServer("teleport",game.JobId)
+            end
+        },
+    },
+    ["One Click"] = {
+        {
+            Mode = "Toggle",
+            Title = "Start One Click",
+            Description = "Do Not Farm Levels Too Fast Or Enjoy Getting Reseted",
+            Args = {"OneClick", "Enable"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.Enable = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Remove limit 1 Minute Get Quest",
+            Description = "Turn This On = Farm Faster But May Get Reseted",
+            Args = {"OneClick", "UnlimitGetQuest"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.UnlimitGetQuest = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Triple Quests",
+            Description = "Only use this if you only farm for a while or get reseted",
+            Args = {"OneClick", "TripleQuest"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.TripleQuest = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Auto Add Stats",
+            Description = "Melee -> Health, The Last One You Chose",
+            Args = {"OneClick", "AutoAddStats"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.AutoAddStats = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Disable Melees Switcher",
+            Description = "Melees Switcher Is For God Human, Turn Off If You Only Want To Farm A Melee",
+            Args = {"OneClick", "DisableMeleeSwitcher"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.DisableMeleeSwitcher = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Farms All Melee 600 Mastery",
+            Description = "Melee -> Health, The Last One You Chose",
+            Args = {"OneClick", "Melee600Mastery"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.Melee600Mastery = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Toggle",
+            Title = "Hop For Library Key / Water Key",
+            Description = "",
+            Args = {"OneClick", "Sea2KeyHop"},
+            OnChange = function(state)
+                getgenv().Setting.OneClick.Sea2KeyHop = state
+                SettingManager:Save()
+            end
+        },
+        {
+            Mode = "Button",
+            Title = "Redeem All Codes",
+            Callback = function()
+                IslandCaller("RedeemAllCode")
+
+            end
+        }
+    }
+}
+print("Adding Shop Items")
+for _,v in pairs(getgenv().IslandVariable.Items) do 
+    for i,t in pairs(v) do
+        table.insert(UiIntilize["Shop"],{
+            Mode = "Label",
+            Title = i .. " Section",
+        })
+        local AllMelees = {}
+        local Caller ={}
+        for _,v2 in pairs(t) do
+            table.insert(AllMelees,v2.Name)
+            Caller[v2.Name]=v2.Args
+        end
+        table.insert(UiIntilize["Shop"],{Mode="Dropdown",Title=i,Table=AllMelees,OnChange=function (state)
+            if Caller[state] then
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(table.unpack(Caller[state]))
+            end
+        end})
+    end
+end
+print("Building Ui")
+
+local BuildUI = function (Tab,i,v,Name)
+
+    if v.Mode == "Toggle" then
+        local pointer = getgenv().Setting
+        local args = v.Args
+        for i = 1, #args - 1 do
+            pointer = pointer[args[i]]
+        end
+        local BuildToggle = {}
+        BuildToggle.Title = v.Title
+        BuildToggle.Default = pointer[args[#args]]
+        if v.Description then
+            BuildToggle.Description  = v.Description
+        end
+        ElementsCollection[Name][v.Title] =  Tab:AddToggle(v.Title, BuildToggle)
+        ElementsCollection[Name][v.Title]:OnChanged(function()
+            pointer[args[#args]] = UiSetting[v.Title].Value
+            if not v.NoSave then
+                SettingManager:Save()
+            end
+        end)
+    elseif v.Mode == "Label" then 
+        local BuildLabel = {}
+        BuildLabel.Title=v.Title
+        if v.Content then
+            BuildLabel.Content = v.Content
+        end
+        ElementsCollection[Name][v.Title] = Tab:AddParagraph(BuildLabel)
+    elseif v.Mode == "Button" then
+        local BuildButton = {}
+        BuildButton.Title = v.Title
+        BuildButton.Callback = v.Callback
+        if v.Description then 
+            BuildButton.Description = v.Description
+        end
+        ElementsCollection[Name][v.Title]  = Tab:AddButton(BuildButton) 
+    elseif v.Mode == "Slider" then
+        local BuildSlider = {}
+        BuildSlider.Title = v.Title
+
+        if v.Description then 
+            BuildSlider.Description = v.Description
+        end
+        if v.Default then
+            BuildSlider.Default = v.Default
+        end
+        BuildSlider.Min = v.Min
+        BuildSlider.Max = v.Max
+        BuildSlider.Rounding = 1
+        ElementsCollection[Name][v.Title]  = Tab:AddSlider(v.Title,BuildSlider)  
+        ElementsCollection[Name][v.Title]:OnChanged(function (v2)
+            v.OnChange(tonumber(v2))
+        end)
+    elseif v.Mode == "Dropdown" then
+        local BuildDropdown = {}
+        BuildDropdown.Title = v.Title
+
+        if v.Description then 
+            BuildDropdown.Description = v.Description
+        end
+        if v.Multi then
+            BuildDropdown.Multi = v.Multi 
+        end
+        if v.Default then
+            BuildDropdown.Default = v.Default 
+        end
+        BuildDropdown.Values = v.Table
+        ElementsCollection[Name][v.Title]  = Tab:AddDropdown(v.Title,BuildDropdown)  
+        ElementsCollection[Name][v.Title]:OnChanged(v.OnChange)
+    elseif v.Mode == "TextBox" then 
+        local BuildTextBox = {}
+        BuildTextBox.Title = v.Title
+        BuildTextBox.Callback = v.Callback
+        BuildTextBox.Finished = v.Finished
+        ElementsCollection[Name][v.Title]  = Tab:AddInput(v.Title,BuildTextBox)  
+    end
+end
+for _,Name in pairs(UiOrders) do
+    TabCollections[Name] = Window:AddTab({ Title = Name, Icon = "" })
+    local Tab = TabCollections[Name]
+    for i,v in pairs(UiIntilize[Name]) do   
+        if type(v)== 'function' then 
+            for i2,v2 in pairs(v()) do
+                BuildUI(Tab,i2,v2,Name)
+            end
+        else
+            BuildUI(Tab,i,v,Name)
+        end
+
+    end
+end
+return Title, SubTitle, ElementsCollection

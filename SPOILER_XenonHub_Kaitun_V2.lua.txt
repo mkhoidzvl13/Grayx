@@ -63,7 +63,7 @@ game.StarterGui:SetCore("SendNotification", {
 
 Date = os.date("%d".." ".."%B".." ".."%Y")
 local Window = Library:CreateWindow({
-    Title = 'sera.ph Hub V2 Premuim Scripts '..Date,
+    Title = 'Grayx Scripts '..Date,
     Center = true, 
     AutoShow = true,
 })

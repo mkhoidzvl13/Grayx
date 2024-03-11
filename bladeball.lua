@@ -2014,7 +2014,7 @@ else
     if _G.Mode == "English" then
 page1:Toggle("AI Wallk To Ball",_G.AIWALK,function(value)
     _G.AIWALK = value
-    game:GetService("StarterGui"):SetCore("SendNotification",{Title = "VectorHub",Text = "Open When Game Start",Icon = "rbxassetid://14645512457",Duration = 1})
+    game:GetService("StarterGui"):SetCore("SendNotification",{Title = "GrayxHub",Text = "Open When Game Start",Icon = "rbxassetid://16364791027",Duration = 1})
     while _G.AIWALK do task.wait()
     
         repeat task.wait()
@@ -2059,7 +2059,7 @@ else
     _G.Mode = "Thai"
     page1:Toggle("Tự động đi về phía quả bóng",_G.AIWALK,function(value)
         _G.AIWALK = value
-        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "VectorHub",Text = "เปิดตอนเกมเริ่มเท่านั้น",Icon = "rbxassetid://14645512457",Duration = 1})
+        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "GrayxHub",Text = "Chỉ mở khi trò chơi bắt đầu.",Icon = "rbxassetid://16364791027",Duration = 1})
         while _G.AIWALK do task.wait()
         
             repeat task.wait()
@@ -2125,7 +2125,7 @@ while _G.FocusBall do task.wait(0)
      end
     end)
 else
-    page1:Toggle("โฟกัสบอล",_G.FocusBall,function(value)
+    page1:Toggle("Bóng tập trung",_G.FocusBall,function(value)
         _G.FocusBall = value
     while _G.FocusBall do task.wait(0)
         local ballsFolder = workspace:WaitForChild("Balls")
@@ -2332,7 +2332,7 @@ else
         end
     end)
     
-    page2:Button("เปลี่ยนเซิฟเวอร์ไปยังคนน้อย",function()
+    page2:Button("Thay đổi máy chủ cho ai đó ít hơn.",function()
         local PlaceID = game.PlaceId
         local AllIDs = {}
         local foundAnything = ""

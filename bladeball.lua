@@ -11,7 +11,7 @@ end
 
 if not game:IsLoaded() then
     local Loaded = Instance.new("Message", workspace)
-    Loaded.Text = 'đợi xíu cmm'
+    Loaded.Text = 'Wait Game Loading'
     game.Loaded:Wait()
     Loaded:Destroy()
     task.wait(10)
@@ -22,7 +22,7 @@ repeat wait() until game.Players.LocalPlayer
 
 if not game:IsLoaded() then
 	local GameLoadGui = Instance.new("Message",workspace);
-	GameLoadGui.Text = 'đợi xíu cmm';
+	GameLoadGui.Text = 'Wait Game Loading';
 	game.Loaded:Wait();
 	GameLoadGui:Destroy();
 	task.wait(10);
@@ -1561,15 +1561,22 @@ function VectorHub:Window(text,gamenme,logo,keybind)
 end
 
 
-local Library = VectorHub:Window("Grayx Hub","","",Enum.KeyCode.F1);
+local Library = VectorHub:Window("x2N Hub","","",Enum.KeyCode.F1);
 if _G.Mode == "English" then
 page1 = Library:Tab("Main")
 page1:Seperator("Main")
+else
+_G.Mode = "Thai"
+page1 = Library:Tab("Trang chủ")
+page1:Seperator("Trang chủ")
 end
 if _G.Mode == "English" then
 page2 = Library:Tab("Misc")
 page2:Seperator("Misc")
-
+else
+_G.Mode = "Thai"
+page2 = Library:Tab("khác")
+page2:Seperator("khác")
 end
 if _G.Mode == "English" then
 page1:Toggle("Auto Parry",false,function(value)
@@ -1670,7 +1677,7 @@ end
 end)
 else
     _G.Mode = "Thai"
-    page1:Toggle("ออโต้บล็อคบอล",false,function(value)
+    page1:Toggle("Tự động chặn bóng",false,function(value)
 
         local function startAutoParry()
             local player = game.Players.LocalPlayer
@@ -1828,7 +1835,7 @@ while _G.ParryballTPP do task.wait(0)
 end)
 else
     _G.Mode = "Thai"
-    page1:Toggle("ออโต้บล็อคบอลแบบวาป",_G.ParryballTPP,function(value)
+    page1:Toggle("Tự động chặn bóng cong vênh",_G.ParryballTPP,function(value)
         _G.ParryballTPP = value
         
        local player = game.Players.LocalPlayer
@@ -1947,7 +1954,7 @@ while _G.FollowBall do task.wait()
 end)
 else
     _G.Mode = "Thai"
-    page1:Toggle("บินตามบอล",_G.FollowBall,function(value)
+    page1:Toggle("Theo bóng",_G.FollowBall,function(value)
         _G.FollowBall = value
         function two(gotoCFrame) --- Tween
             pcall(function()
@@ -2050,7 +2057,7 @@ page1:Toggle("AI Wallk To Ball",_G.AIWALK,function(value)
 end)
 else
     _G.Mode = "Thai"
-    page1:Toggle("ออโต้เดินไปหาบอล",_G.AIWALK,function(value)
+    page1:Toggle("Tự động đi về phía quả bóng",_G.AIWALK,function(value)
         _G.AIWALK = value
         game:GetService("StarterGui"):SetCore("SendNotification",{Title = "VectorHub",Text = "เปิดตอนเกมเริ่มเท่านั้น",Icon = "rbxassetid://14645512457",Duration = 1})
         while _G.AIWALK do task.wait()
@@ -2153,7 +2160,7 @@ game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenExplosionBox:Invok
 end)
 else
     _G.Mode = "Thai"
-    page1:Button("เปิดกล่องดาบ",function()
+    page1:Button("Mở hộp kiếm",function()
         game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenSwordBox:InvokeServer()
         end)
         page1:Button("เปิดกล่องเอฟเฟกต์การตาย",function()
@@ -2281,7 +2288,7 @@ page2:Button("HoplittleServer",function()
 end)
 else
     _G.Mode = "Thai"
-    page2:Button("รีเซิฟเวอร์",function()
+    page2:Button("Máy chủ",function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
     end)
     

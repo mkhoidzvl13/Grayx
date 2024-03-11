@@ -2059,7 +2059,7 @@ else
     _G.Mode = "Thai"
     page1:Toggle("Tự động đi về phía quả bóng",_G.AIWALK,function(value)
         _G.AIWALK = value
-        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "GrayxHub",Text = "Chỉ mở khi trò chơi bắt đầu.",Icon = "rbxassetid://16364791027",Duration = 1})
+        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "GrayxHub",Text = "địt mẹ vào trận rồi mở.",Icon = "rbxassetid://16364791027",Duration = 1})
         while _G.AIWALK do task.wait()
         
             repeat task.wait()

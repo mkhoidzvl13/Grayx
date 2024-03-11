@@ -1561,22 +1561,14 @@ function VectorHub:Window(text,gamenme,logo,keybind)
 end
 
 
-local Library = VectorHub:Window("x2N Hub","","",Enum.KeyCode.F1);
+local Library = VectorHub:Window("x2Grayx Hub","","",Enum.KeyCode.F1);
 if _G.Mode == "English" then
 page1 = Library:Tab("Main")
 page1:Seperator("Main")
-else
-_G.Mode = "Thai"
-page1 = Library:Tab("หน้าหลัก")
-page1:Seperator("หน้าหลัก")
 end
 if _G.Mode == "English" then
 page2 = Library:Tab("Misc")
 page2:Seperator("Misc")
-else
-_G.Mode = "Thai"
-page2 = Library:Tab("อื่นๆ")
-page2:Seperator("อื่นๆ")
 end
 if _G.Mode == "English" then
 page1:Toggle("Auto Parry",false,function(value)
@@ -1676,7 +1668,7 @@ elseif value == false  then
 end
 end)
 else
-    _G.Mode = "Thai"
+    _G.Mode = "English"
     page1:Toggle("ออโต้บล็อคบอล",false,function(value)
 
         local function startAutoParry()
@@ -1834,7 +1826,7 @@ while _G.ParryballTPP do task.wait(0)
    end
 end)
 else
-    _G.Mode = "Thai"
+    _G.Mode = "English"
     page1:Toggle("ออโต้บล็อคบอลแบบวาป",_G.ParryballTPP,function(value)
         _G.ParryballTPP = value
         
@@ -1953,7 +1945,7 @@ while _G.FollowBall do task.wait()
      end
 end)
 else
-    _G.Mode = "Thai"
+    _G.Mode = "English"
     page1:Toggle("บินตามบอล",_G.FollowBall,function(value)
         _G.FollowBall = value
         function two(gotoCFrame) --- Tween
@@ -2056,10 +2048,10 @@ page1:Toggle("AI Wallk To Ball",_G.AIWALK,function(value)
         end
 end)
 else
-    _G.Mode = "Thai"
+    _G.Mode = "English"
     page1:Toggle("ออโต้เดินไปหาบอล",_G.AIWALK,function(value)
         _G.AIWALK = value
-        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "VectorHub",Text = "เปิดตอนเกมเริ่มเท่านั้น",Icon = "rbxassetid://14645512457",Duration = 1})
+        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "GrayxHub",Text = "เปิดตอนเกมเริ่มเท่านั้น",Icon = "rbxassetid://14645512457",Duration = 1})
         while _G.AIWALK do task.wait()
         
             repeat task.wait()
@@ -2159,7 +2151,7 @@ page1:Button("Open Box Explosion Normal",function()
 game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenExplosionBox:InvokeServer()
 end)
 else
-    _G.Mode = "Thai"
+    _G.Mode = "English"
     page1:Button("เปิดกล่องดาบ",function()
         game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenSwordBox:InvokeServer()
         end)
@@ -2287,7 +2279,7 @@ page2:Button("HoplittleServer",function()
     Teleport()
 end)
 else
-    _G.Mode = "Thai"
+    _G.Mode = "English"
     page2:Button("รีเซิฟเวอร์",function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
     end)

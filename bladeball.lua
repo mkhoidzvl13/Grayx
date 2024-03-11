@@ -11,7 +11,7 @@ end
 
 if not game:IsLoaded() then
     local Loaded = Instance.new("Message", workspace)
-    Loaded.Text = 'đợi xíu địt mẹ'
+    Loaded.Text = 'Wait Game Loading'
     game.Loaded:Wait()
     Loaded:Destroy()
     task.wait(10)
@@ -22,7 +22,7 @@ repeat wait() until game.Players.LocalPlayer
 
 if not game:IsLoaded() then
 	local GameLoadGui = Instance.new("Message",workspace);
-	GameLoadGui.Text = 'đợi xíu địt mẹ';
+	GameLoadGui.Text = 'Wait Game Loading';
 	game.Loaded:Wait();
 	GameLoadGui:Destroy();
 	task.wait(10);
@@ -69,21 +69,21 @@ local ActualTypes = {
 local Properties = {
 	RoundFrame = {
 		BackgroundTransparency = 1,
-		Image = "http://www.roblox.com/asset/?id=16364791027",
+		Image = "http://www.roblox.com/asset/?id=5554237731",
 		ScaleType = Enum.ScaleType.Slice,
 		SliceCenter = Rect.new(3,3,297,297)
 	},
 	SmoothButton = {
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Image = "http://www.roblox.com/asset/?id=16364791027",
+		Image = "http://www.roblox.com/asset/?id=5554237731",
 		ScaleType = Enum.ScaleType.Slice,
 		SliceCenter = Rect.new(3,3,297,297)
 	},
 	Shadow = {
 		Name = "Shadow",
 		BackgroundTransparency = 1,
-		Image = "http://www.roblox.com/asset/?id=16364791027",
+		Image = "http://www.roblox.com/asset/?id=5554236805",
 		ScaleType = Enum.ScaleType.Slice,
 		SliceCenter = Rect.new(23,23,277,277),
 		Size = UDim2.fromScale(1,1) + UDim2.fromOffset(30,30),
@@ -91,12 +91,12 @@ local Properties = {
 	},
 	Circle = {
 		BackgroundTransparency = 1,
-		Image = "http://www.roblox.com/asset/?id=16364791027"
+		Image = "http://www.roblox.com/asset/?id=5554831670"
 	},
 	CircleButton = {
 		BackgroundTransparency = 1,
 		AutoButtonColor = false,
-		Image = "http://www.roblox.com/asset/?id=16364791027"
+		Image = "http://www.roblox.com/asset/?id=5554831670"
 	},
 	Frame = {
 		BackgroundTransparency = 1,
@@ -134,13 +134,13 @@ local Properties = {
 		Name = "More",
 		AutoButtonColor = false,
 		BackgroundTransparency = 1,
-		Image = "http://www.roblox.com/asset/?id=16364791027",
+		Image = "http://www.roblox.com/asset/?id=5555108481",
 		Size = UDim2.fromOffset(20,20),
 		Position = UDim2.fromScale(1,0.5) - UDim2.fromOffset(25,10)
 	},
 	NavBar = {
 		Name = "SheetToggle",
-		Image = "http://www.roblox.com/asset/?id=16364791027",
+		Image = "http://www.roblox.com/asset/?id=5576439039",
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(20,20),
 		Position = UDim2.fromOffset(5,5),
@@ -271,14 +271,14 @@ local SoundClick = Instance.new("Sound")
 
 SoundClick.Name = "Sound Effect"
 SoundClick.Parent = Load
-SoundClick.SoundId = "rbxassetid://16364791027" 
+SoundClick.SoundId = "rbxassetid://8055713313" 
 SoundClick.Volume = 1
 
 local SoundClick2 = Instance.new("Sound")
 
 SoundClick2.Name = "Sound Effect"
 SoundClick2.Parent = Load
-SoundClick2.SoundId = "rbxassetid://16364791027" --
+SoundClick2.SoundId = "rbxassetid://3398620867" --
 SoundClick2.Volume = 1
 
 
@@ -394,7 +394,7 @@ LoadScrollbar.AnchorPoint = Vector2.new(0.5,0.5)
 LoadScrollbar.BackgroundTransparency = 1.000
 LoadScrollbar.Position = UDim2.new(0.5, 0, 0.5, 0)
 LoadScrollbar.Size = UDim2.new(0, 30, 0, 30)
-LoadScrollbar.Image = "http://www.roblox.com/asset/?id=16364791027"
+LoadScrollbar.Image = "http://www.roblox.com/asset/?id=6031097225"
 LoadScrollbar.ImageTransparency = 1
 LoadScrollbar.Visible = false
 
@@ -619,7 +619,7 @@ function VectorHub:Window(text,gamenme,logo,keybind)
     end
 	
 	local VectorHub = Instance.new("ScreenGui") -- guess i am using hubname wrong
-	VectorHub.Name = "GrayxHub" -- wait 
+	VectorHub.Name = "VectorHub" -- wait 
 	VectorHub.Parent = game:GetService("CoreGui").RobloxGui.Modules.Profile
 	VectorHub.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -1082,7 +1082,7 @@ function VectorHub:Window(text,gamenme,logo,keybind)
 			DropImage.Position = UDim2.new(0, 445, 0, 6)
 			DropImage.Rotation = 180.000
 			DropImage.Size = UDim2.new(0, 20, 0, 20)
-			DropImage.Image = "rbxassetid://16364791027"
+			DropImage.Image = "rbxassetid://6031090990"
 			
 			DropButton.Name = "DropButton"
 			DropButton.Parent = Dropdown
@@ -1561,7 +1561,7 @@ function VectorHub:Window(text,gamenme,logo,keybind)
 end
 
 
-local Library = VectorHub:Window("x2Grayx Hub","","",Enum.KeyCode.F1);
+local Library = VectorHub:Window("Grayx Hub","","",Enum.KeyCode.F1);
 if _G.Mode == "English" then
 page1 = Library:Tab("Main")
 page1:Seperator("Main")
@@ -1569,6 +1569,7 @@ end
 if _G.Mode == "English" then
 page2 = Library:Tab("Misc")
 page2:Seperator("Misc")
+
 end
 if _G.Mode == "English" then
 page1:Toggle("Auto Parry",false,function(value)
@@ -1668,7 +1669,7 @@ elseif value == false  then
 end
 end)
 else
-    _G.Mode = "English"
+    _G.Mode = "Thai"
     page1:Toggle("ออโต้บล็อคบอล",false,function(value)
 
         local function startAutoParry()
@@ -1826,7 +1827,7 @@ while _G.ParryballTPP do task.wait(0)
    end
 end)
 else
-    _G.Mode = "English"
+    _G.Mode = "Thai"
     page1:Toggle("ออโต้บล็อคบอลแบบวาป",_G.ParryballTPP,function(value)
         _G.ParryballTPP = value
         
@@ -1945,7 +1946,7 @@ while _G.FollowBall do task.wait()
      end
 end)
 else
-    _G.Mode = "English"
+    _G.Mode = "Thai"
     page1:Toggle("บินตามบอล",_G.FollowBall,function(value)
         _G.FollowBall = value
         function two(gotoCFrame) --- Tween
@@ -2048,10 +2049,10 @@ page1:Toggle("AI Wallk To Ball",_G.AIWALK,function(value)
         end
 end)
 else
-    _G.Mode = "English"
+    _G.Mode = "Thai"
     page1:Toggle("ออโต้เดินไปหาบอล",_G.AIWALK,function(value)
         _G.AIWALK = value
-        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "GrayxHub",Text = "เปิดตอนเกมเริ่มเท่านั้น",Icon = "rbxassetid://14645512457",Duration = 1})
+        game:GetService("StarterGui"):SetCore("SendNotification",{Title = "VectorHub",Text = "เปิดตอนเกมเริ่มเท่านั้น",Icon = "rbxassetid://14645512457",Duration = 1})
         while _G.AIWALK do task.wait()
         
             repeat task.wait()
@@ -2151,7 +2152,7 @@ page1:Button("Open Box Explosion Normal",function()
 game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenExplosionBox:InvokeServer()
 end)
 else
-    _G.Mode = "English"
+    _G.Mode = "Thai"
     page1:Button("เปิดกล่องดาบ",function()
         game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenSwordBox:InvokeServer()
         end)
@@ -2279,7 +2280,7 @@ page2:Button("HoplittleServer",function()
     Teleport()
 end)
 else
-    _G.Mode = "English"
+    _G.Mode = "Thai"
     page2:Button("รีเซิฟเวอร์",function()
         game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
     end)

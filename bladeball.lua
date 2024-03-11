@@ -255,7 +255,7 @@ LoadButton.Position = UDim2.new(0.5, 0, 0.5, 0)
 LoadButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 LoadButton.BackgroundTransparency = 1.000
 LoadButton.Size = UDim2.new(0, 50, 0, 50)
-LoadButton.Image = "http://www.roblox.com/asset/?id=14645512457" --ใส๋โลโก้
+LoadButton.Image = "http://www.roblox.com/asset/?id=16364791027" --ใส๋โลโก้
 LoadButton.ImageTransparency = 1
 
 local ClickFrame = Instance.new("Frame")
@@ -2163,7 +2163,7 @@ else
     page1:Button("Mở hộp kiếm",function()
         game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenSwordBox:InvokeServer()
         end)
-        page1:Button("เปิดกล่องเอฟเฟกต์การตาย",function()
+        page1:Button("Mở hộp hiệu ứng chết chóc",function()
         game:GetService("ReplicatedStorage").Remotes.Store.RequestOpenExplosionBox:InvokeServer()
         end)
 end
@@ -2292,7 +2292,7 @@ else
         game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
     end)
     
-    page2:Button("เปลี่ยนเซิฟเวอร์",function()
+    page2:Button("Thay đổi máy chủ",function()
         repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
         local HttpService, TPService = game:GetService "HttpService", game:GetService "TeleportService";
         local OtherServers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" ..

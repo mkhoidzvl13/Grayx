@@ -11,7 +11,7 @@ end
 
 if not game:IsLoaded() then
     local Loaded = Instance.new("Message", workspace)
-    Loaded.Text = 'Wait Game Loading'
+    Loaded.Text = 'đợi xíu cmm'
     game.Loaded:Wait()
     Loaded:Destroy()
     task.wait(10)
@@ -22,7 +22,7 @@ repeat wait() until game.Players.LocalPlayer
 
 if not game:IsLoaded() then
 	local GameLoadGui = Instance.new("Message",workspace);
-	GameLoadGui.Text = 'Wait Game Loading';
+	GameLoadGui.Text = 'đợi xíu cmm';
 	game.Loaded:Wait();
 	GameLoadGui:Destroy();
 	task.wait(10);

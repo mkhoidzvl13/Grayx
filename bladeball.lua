@@ -1561,7 +1561,7 @@ function VectorHub:Window(text,gamenme,logo,keybind)
 end
 
 
-local Library = VectorHub:Window("x2N Hub","","",Enum.KeyCode.F1);
+local Library = VectorHub:Window("Grayx Hub","","",Enum.KeyCode.F1);
 if _G.Mode == "English" then
 page1 = Library:Tab("Main")
 page1:Seperator("Main")

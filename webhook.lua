@@ -81,15 +81,15 @@ local CTXWebhookfunc = {
                 ["name"] = "Blox Fruits"
             },
             ["footer"] = {
-                ["text"] = "CTX Offical",
-                ["icon_url"] = "https://media.discordapp.net/attachments/1214951450397114370/1219603223510257774/image.png?ex=660be703&is=65f97203&hm=496577eb9bdb353148d7ba098dfdcce6882477a666238c5c969cbd510b991b8a&=&format=webp&quality=lossless"
+                ["text"] = "Grayx hub",
+                ["icon_url"] = "https://cdn.discordapp.com/attachments/1218431024187445248/1219496916614905968/f5ec64b40d2adf7deb84e3c0e192ff32.gif?ex=660b8402&is=65f90f02&hm=a4dac3d27875cdf085add8a827cb818b8b10f6c52ab2a18a641838d78c1eb91d&"
             },
             ["timestamp"] = "2024-03-19T11:38:00.000Z",
             ["image"] = {
-                ["url"] = "https://media.discordapp.net/attachments/1214951450397114370/1219603055532703755/hero-background-imag.png?ex=660be6db&is=65f971db&hm=449b56df83065924f7d4dbcf66251649595c610d4c4043e362f6bdfaf8532d2f&=&format=webp&quality=lossless&width=550&height=309"
+                ["url"] = "https://cdn.discordapp.com/attachments/1218431024187445248/1219496916614905968/f5ec64b40d2adf7deb84e3c0e192ff32.gif?ex=660b8402&is=65f90f02&hm=a4dac3d27875cdf085add8a827cb818b8b10f6c52ab2a18a641838d78c1eb91d&"
             },
             ["thumbnail"] = {
-                ["url"] = "https://media.discordapp.net/attachments/1214951450397114370/1219603223510257774/image.png?ex=660be703&is=65f97203&hm=496577eb9bdb353148d7ba098dfdcce6882477a666238c5c969cbd510b991b8a&=&format=webp&quality=lossless"
+                ["url"] = "https://cdn.discordapp.com/attachments/1218431024187445248/1219496916614905968/f5ec64b40d2adf7deb84e3c0e192ff32.gif?ex=660b8402&is=65f90f02&hm=a4dac3d27875cdf085add8a827cb818b8b10f6c52ab2a18a641838d78c1eb91d&"
             }
         }
     },

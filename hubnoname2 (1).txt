@@ -1,4 +1,4 @@
-_Grayx.UrlWebhook = "https://discord.com/api/webhooks/xxxxxxx/xxxxxxxxxxxxx" ---// Link Webhook Của Bạn
+_Grayx.UrlWebhook = "https://discord.com/api/webhooks/1218431057549070376/g-dG4aWb1H7CqXa7CpYl0Xr27EXcLY0my9k734GkmDuU5rygYgcCsgBLZQIve-TWkw_4" ---// Link Webhook Của Bạn
 _Grayx.NameHub = "Grayx Hub" ---// Tên Hub Của Bạn
 _Grayx.Urlimage = "https://imgur.com/oUwpP5C" ---// Link Ảnh Banner (Nếu Xoá Sẽ Để Ảnh Gốc)
 _Grayx.NameScript = "Grayx" ---// Tên Script

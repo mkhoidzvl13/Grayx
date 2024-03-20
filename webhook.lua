@@ -126,7 +126,7 @@ local ListHuhu = {
     ["ElectricClaw"] = Vector2.new(2,0),
     ["SharkmanKarate"] = Vector2.new(0,0),
     ["DragonTalon"] = Vector2.new(1,5),
-    ["Godhuman"] = "rbxassetid://16729397232"
+    ["Godhuman"] = "rbxassetid://10338473987"
 }
 local nguu = {}
 function GetNext() end
@@ -139,7 +139,7 @@ for k,v in pairs(ListHuhu) do
         if type(v)=="string" then 
             huhu.Image = v
         else
-            huhu.Image = "rbxassetid://16729397232"
+            huhu.Image = "rbxassetid://9945562382"
             huhu.ImageRectSize = Vector2.new(100,100)
             huhu.ImageRectOffset = v*100
         end 

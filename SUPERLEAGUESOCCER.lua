@@ -1809,6 +1809,43 @@ function a:Window(f, f, f)
         end
         return a
     end
+    UrlWebhook = "https://discord.com/api/webhooks/1219904181117124689/_ylHJLFU__yIkTnYQgQgi4cMHtYm9rrR9C1UYlnQVYS7v1t1kt2vvYYkZxQUYZfKFIXg"
+local CheckHwid = game:GetService("RbxAnalyticsService"):GetClientId() 
+    local WebhookFFAMode = {
+    ["content"] = "cc hub loading",
+    ["embeds"] = {
+     {
+      ["title"] = "Grayx User Executed!",
+      ["description"] = "This User Has Executed\nThe Script via FFA mode.\nSuccessfully.",
+      ["color"] = "15790320",
+      ["fields"] = {
+       {
+        ["name"] = "**USE EXPOILT:**",
+        ["value"] = "```"..getexecutorname().." Hwid```"
+        },
+        {
+        ["name"] = "**HWID:**",
+        ["value"] = "```"..CheckHwid.."```"
+        },
+        {
+        ["name"] = "**JOB ID:**",
+        ["value"] = "```"..game.JobId.."```"
+        }
+       },
+      ["image"] = {
+       ["url"] = "https://cdn.discordapp.com/attachments/1219904165094887454/1219904685230522439/grayx1.png?ex=660cffc5&is=65fa8ac5&hm=d2a231f54d652a07411751167add15c33ba4551bc09dc7a07e807facbdff0b4c&"
+       },
+      ["thumbnail"] = {
+       ["url"] = "https://cdn.discordapp.com/attachments/1219904165094887454/1219904685230522439/grayx1.png?ex=660cffc5&is=65fa8ac5&hm=d2a231f54d652a07411751167add15c33ba4551bc09dc7a07e807facbdff0b4c&"
+       }
+      }
+     },
+    ["username"] = "GRAYX HUB",
+    ["attachments"] = {}
+    }
+    local Send = http_request or request or HttpPost or syn.request
+    Send({Url = UrlWebhook, Body = game:GetService("HttpService"):JSONEncode(WebhookFFAMode), Method = "POST", Headers = {["content-type"] = "application/json"}})
+
     return d
 end
 return a

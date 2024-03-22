@@ -110,7 +110,7 @@ e.Draggable = true
 e.Active = true
 e.Selectable = true
 e.BackgroundTransparency = .1
-e.Image = "rbxassetid://16729397232"
+e.Image = "rbxassetid://16632632847"
 e.Visible = false
 local a = Instance.new("UICorner")
 a.Name = "MCNR"
@@ -196,7 +196,7 @@ function a:Window(f, f, f)
     j.ImageColor3 = Color3.fromRGB(255, 255, 255)
     j.Position = UDim2.new(0, 500, 0, 7)
     j.Size = UDim2.new(0, 30, 0, 30)
-    j.Image = "rbxassetid://16729397232"
+    j.Image = "rbxassetid://16632632847"
     j.MouseButton1Click:Connect(
         function()
             game:GetService("VirtualInputManager"):SendKeyEvent(true, 305, false, game)
@@ -618,7 +618,7 @@ function a:Window(f, f, f)
             o.BackgroundTransparency = 1.000
             o.Position = UDim2.new(0, 5, 0, 8)
             o.Size = UDim2.new(0, 30, 0, 30)
-            o.Image = "rbxassetid://16729397232"
+            o.Image = "rbxassetid://16632632847"
             j.Parent = h
             j.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
             j.BackgroundTransparency = 1.000
@@ -711,7 +711,7 @@ function a:Window(f, f, f)
             f.BackgroundTransparency = 1.000
             f.Position = UDim2.new(0, 5, 0, 3)
             f.Size = UDim2.new(0, 30, 0, 30)
-            f.Image = "rbxassetid://16729397232"
+            f.Image = "rbxassetid://16632632847"
             k.Name = "DropTitle"
             k.Parent = g
             k.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
@@ -926,7 +926,7 @@ function a:Window(f, f, f)
             l.BorderSizePixel = 0
             l.Position = UDim2.new(0, 7.5, 0, 7.5)
             l.Size = UDim2.new(0, 30, 0, 30)
-            l.Image = "rbxassetid://16729397232"
+            l.Image = "rbxassetid://16632632847"
             m.Parent = j
             m.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
             m.BackgroundTransparency = 1.000
@@ -1324,7 +1324,7 @@ function a:Window(f, f, f)
             k.BorderSizePixel = 0
             k.Position = UDim2.new(0, 7.5, 0, 7.5)
             k.Size = UDim2.new(0, 30, 0, 30)
-            k.Image = "rbxassetid://16729397232"
+            k.Image = "rbxassetid://16632632847"
             l.Parent = i
             l.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
             l.BackgroundTransparency = 1.000

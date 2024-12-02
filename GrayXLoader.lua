@@ -1,6 +1,20 @@
--- Load UI Library
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Raid Tool", "DarkTheme") -- Mặc định là DarkTheme
+-- Load Fluent UI Library
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+-- Khởi tạo UI chính
+local Window = Fluent:CreateWindow({
+    Title = "Grayx",
+    SubTitle = "GRAYX",
+    TabWidth = 150
+})
+
+-- Tạo Tab "Farming" cho các toggle tính năng
+local FarmingTab = Window:AddTab("Farming")
+local FarmingSection = FarmingTab:AddSection("Auto Farming")
+
+-- Tạo Tab "Settings" cho cài đặt khác
+local SettingsTab = Window:AddTab("Settings")
+local SettingsSection = SettingsTab:AddSection("Customization & Save")
 
 -- Lưu trữ trạng thái các cài đặt
 local Settings = {
@@ -21,7 +35,7 @@ end
 local function LoadSettings()
     local HttpService = game:GetService("HttpService")
     if isfile("hub.json") then
-        local contents = readfile("settings.json")
+        local contents = readfile("hub.json")
         Settings = HttpService:JSONDecode(contents)
     end
 end
@@ -29,39 +43,71 @@ end
 -- Gọi hàm tải cài đặt khi khởi động
 LoadSettings()
 
--- Tab Farming
-local LeftGroupBox = Window:NewTab("Farming"):NewSection("Auto Farming")
+-- Các Toggle trong Tab "Farming"
+FarmingSection:AddToggle("Auto Mobs", {
+    Default = Settings.AutoMobs,
+    Text = "Auto Mobs",
+    Callback = function(state)
+        Settings.AutoMobs = state
+        SaveSettings()
+    end
+})
 
-LeftGroupBox:NewToggle("Auto Mobs", "Farms Mobs", function(A)
-    Settings.AutoMobs = A
-end).Set(Settings.AutoMobs)
+FarmingSection:AddToggle("Auto Boss Quests", {
+    Default = Settings.AutoBossQuests,
+    Text = "Auto Boss Quests",
+    Callback = function(state)
+        Settings.AutoBossQuests = state
+        SaveSettings()
+    end
+})
 
-LeftGroupBox:NewToggle("Auto Boss Quests", "Farms Boss Quests", function(A)
-    Settings.AutoBossQuests = A
-end).Set(Settings.AutoBossQuests)
+FarmingSection:AddToggle("Semi Kill Aura", {
+    Default = Settings.SemiKillAura,
+    Text = "Semi Kill Aura",
+    Callback = function(state)
+        Settings.SemiKillAura = state
+        SaveSettings()
+    end
+})
 
-LeftGroupBox:NewToggle("Semi Kill Aura", "Mob Has to be Damaged", function(A)
-    Settings.SemiKillAura = A
-end).Set(Settings.SemiKillAura)
+FarmingSection:AddToggle("Auto Dungeon", {
+    Default = Settings.AutoDungeon,
+    Text = "Auto Dungeon",
+    Callback = function(state)
+        Settings.AutoDungeon = state
+        SaveSettings()
+    end
+})
 
-LeftGroupBox:NewToggle("Auto Dungeon", "Farms Dungeon", function(A)
-    Settings.AutoDungeon = A
-end).Set(Settings.AutoDungeon)
-
--- Tab Settings
-local SettingsTab = Window:NewTab("Settings"):NewSection("Customization & Save")
-
--- Nút Lưu Cài Đặt
-SettingsTab:NewButton("Lưu Cài Đặt", "Lưu tất cả các cài đặt vào settings.json", function()
+-- Nút lưu cài đặt trong Tab Settings
+SettingsSection:AddButton("Lưu Cài Đặt", function()
     SaveSettings()
-    print("Cài đặt đã được lưu.")
+    Fluent:Notify("Cài đặt đã được lưu.", "success")
 end)
 
--- Đổi màu theme
-SettingsTab:NewDropdown("Đổi Theme", "Chọn một theme mới", {"DarkTheme", "LightTheme", "BloodTheme", "GrapeTheme", "Ocean", "Midnight"}, function(theme)
-    Window:ChangeTheme(theme)
-    Settings.Theme = theme
-end).Set(Settings.Theme)
+-- Dropdown đổi theme trong Tab Settings
+SettingsSection:AddDropdown("Đổi Theme", {
+    Items = {"DarkTheme", "LightTheme", "BloodTheme", "GrapeTheme", "Ocean", "Midnight"},
+    Default = Settings.Theme,
+    Callback = function(theme)
+        Fluent:SetTheme(theme)
+        Settings.Theme = theme
+        SaveSettings()
+    end
+})
+
+-- Interface Manager để quản lý trạng thái UI (ẩn/hiện giao diện)
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+InterfaceManager:Load(Window)
+
+-- SaveManager để lưu và tải các cấu hình UI
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+SaveManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({"Settings"})
+SaveManager:BuildConfigSection(SettingsTab)
+SaveManager:LoadSettings()
 
 -- Khởi tạo UI
-Library:Init()
+Fluent:Notify("Raid Tool đã sẵn sàng!", "info")
